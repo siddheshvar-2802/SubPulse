@@ -25,6 +25,10 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+target/
+.mvn
+mvnw
+mvnw.cmd
 
 ### NetBeans ###
 /nbproject/private/
