@@ -1,0 +1,96 @@
+$kind: http-request
+name: Create Subscription
+description: "Generated from cURL: curl -X 'POST' \\\r
+
+  \  'http://localhost:8080/api/v1/subscriptions' \\\r
+
+  \  -H 'accept: */*' \\\r
+
+  \  -H 'Content-Type: application/json' \\\r
+
+  \  -d '{\r
+
+  \  \"serviceName\": \"GitHub Copilot\",\r
+
+  \  \"description\": \"AI pair programmer\",\r
+
+  \  \"websiteUrl\": \"https://github.com\",\r
+
+  \  \"amount\": 10.00,\r
+
+  \  \"currency\": \"USD\",\r
+
+  \  \"billingCycle\": \"MONTHLY\",\r
+
+  \  \"startDate\": \"2026-01-01\",\r
+
+  \  \"nextBillingDate\": \"2026-08-24\",\r
+
+  \  \"autoRenew\": true,\r
+
+  \  \"category\": \"DEVELOPER_TOOLS\"\r
+
+  }\r
+
+  '"
+url: http://localhost:8080/api/v1/subscriptions
+method: POST
+headers:
+  accept: "*/*"
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \    \"serviceName\": \"Netflix Premium\",\r
+
+    \    \"description\": \"4K Ultra HD Streaming\",\r
+
+    \    \"websiteUrl\": \"https://netflix.com\",\r
+
+    \    \"amount\": 22.99,\r
+
+    \    \"currency\": \"USD\",\r
+
+    \    \"billingCycle\": \"MONTHLY\",\r
+
+    \    \"startDate\": \"2026-01-15\",\r
+
+    \    \"nextBillingDate\": \"2026-09-01\",\r
+
+    \    \"autoRenew\": true,\r
+
+    \    \"category\": \"ENTERTAINMENT\"\r
+
+    }\r
+
+    \r
+
+    // {\r
+
+    //   \"serviceName\": \"GitHub Copilot\",\r
+
+    //   \"description\": \"AI pair programmer\",\r
+
+    //   \"websiteUrl\": \"https://github.com\",\r
+
+    //   \"amount\": 10.00,\r
+
+    //   \"currency\": \"USD\",\r
+
+    //   \"billingCycle\": \"MONTHLY\",\r
+
+    //   \"startDate\": \"2026-01-01\",\r
+
+    //   \"nextBillingDate\": \"2026-08-24\",\r
+
+    //   \"autoRenew\": true,\r
+
+    //   \"category\": \"DEVELOPER_TOOLS\"\r
+
+    // }\r\n"
+auth:
+  type: bearer
+  credentials:
+    token: "{{supabase_service_role_api_key_0oz2}}"
+order: 3887182372844781

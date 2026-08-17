@@ -1,0 +1,44 @@
+$kind: http-request
+name: Register User
+description: "Generated from cURL: curl -X 'POST' \\\r
+
+  \  'http://localhost:8080/api/v1/auth/register' \\\r
+
+  \  -H 'accept: */*' \\\r
+
+  \  -H 'Content-Type: application/json' \\\r
+
+  \  -d '{\r
+
+  \  \"fullName\": \"Siddheshvar Patil\",\r
+
+  \  \"email\": \"jackmaxwell2233@gmail.com\",\r
+
+  \  \"password\": \"Pass@123\",\r
+
+  \  \"timezone\": \"13:13:13\",\r
+
+  \  \"preferredCurrency\": \"INR\"\r
+
+  }'"
+url: http://localhost:8080/api/v1/auth/register
+method: POST
+headers:
+  accept: "*/*"
+  Content-Type: application/json
+body:
+  type: text
+  content: "{\r
+
+    \  \"fullName\": \"Siddheshvar Patil\",\r
+
+    \  \"email\": \"jackmaxwell2233@gmail.com\",\r
+
+    \  \"password\": \"Pass@123\",\r
+
+    \  \"timezone\": \"13:13:13\",\r
+
+    \  \"preferredCurrency\": \"INR\"\r
+
+    }"
+order: 2578940000132953

@@ -1,0 +1,46 @@
+$kind: http-request
+name: Create Alert
+description: "Generated from cURL: curl -X 'POST' \\\r
+
+  \  'http://localhost:8080/api/v1/subscriptions/1/alerts' \\\r
+
+  \  -H 'accept: */*' \\\r
+
+  \  -H 'Content-Type: application/json' \\\r
+
+  \  -d '{\r
+
+  \  \"daysBefore\": 7,\r
+
+  \  \"channel\": \"EMAIL\",\r
+
+  \  \"isEnabled\": true,\r
+
+  \  \"destination\": \"jackmaxwell2233@gmail.com\"-\r
+
+  }\r
+
+  '"
+url: http://localhost:8080/api/v1/subscriptions/1/alerts
+method: POST
+headers:
+  accept: "*/*"
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"daysBefore\": 1,\r
+
+    \  \"channel\": \"TELEGRAM\",\r
+
+    \  \"isEnabled\": true,\r
+
+    \  \"destination\": \"8983496339\"\r
+
+    }\r\n"
+auth:
+  type: bearer
+  credentials:
+    token: "{{supabase_service_role_api_key_0oz2}}"
+order: 4501038831442421

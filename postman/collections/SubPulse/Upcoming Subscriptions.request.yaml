@@ -1,0 +1,18 @@
+$kind: http-request
+name: Upcoming Subscriptions
+description: "Generated from cURL: curl -X 'GET' \\\r
+
+  \  'http://localhost:8080/api/v1/subscriptions/upcoming?days=30' \\\r
+
+  \  -H 'accept: */*'"
+url: http://localhost:8080/api/v1/subscriptions/upcoming?days=30
+method: GET
+headers:
+  accept: "*/*"
+queryParams:
+  days: "30"
+auth:
+  type: bearer
+  credentials:
+    token: "{{supabase_service_role_api_key_0oz2}}"
+order: 4499015713130319

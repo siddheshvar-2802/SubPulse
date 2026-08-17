@@ -1,0 +1,31 @@
+$kind: http-request
+description: "Generated from cURL: curl -X 'POST' \\\r
+
+  \  'http://localhost:8080/api/v1/auth/login' \\\r
+
+  \  -H 'accept: */*' \\\r
+
+  \  -H 'Content-Type: application/json' \\\r
+
+  \  -d '{\r
+
+  \  \"email\": \"jackmaxwell2233@gmail.com\",\r
+
+  \  \"password\": \"Pass@123\"\r
+
+  }'"
+url: http://localhost:8080/api/v1/auth/login
+method: POST
+headers:
+  accept: "*/*"
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"jackmaxwell2233@gmail.com\",\r
+
+    \  \"password\": \"Pass@123\"\r
+
+    }"
+order: 1786780170883
