@@ -33,7 +33,7 @@ spring:
   # ── JPA / Hibernate ─────────────────────────────────────────────────────────
   jpa:
     hibernate:
-      ddl-auto: update       # Auto-creates/updates tables in dev
+      ddl-auto: none       # Auto-creates/updates tables in dev
     show-sql: true
     properties:
       hibernate:
