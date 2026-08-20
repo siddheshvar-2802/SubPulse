@@ -15,4 +15,5 @@ public interface SubscriptionService {
     void delete(Long userId, Long subscriptionId);
     SubscriptionResponse toggleActive(Long userId, Long subscriptionId);
     AnalyticsResponse getAnalytics(Long userId);
+    AnalyticsResponse getAnalytics(Long userId, String targetCurrency);
 }

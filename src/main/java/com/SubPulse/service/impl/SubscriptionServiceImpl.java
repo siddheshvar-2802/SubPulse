@@ -10,6 +10,7 @@ import com.subpulse.exception.ResourceNotFoundException;
 import com.subpulse.exception.UnauthorizedAccessException;
 import com.subpulse.repository.SubscriptionRepository;
 import com.subpulse.repository.UserRepository;
+import com.subpulse.service.CurrencyConversionService;
 import com.subpulse.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SubscriptionServiceImpl implements SubscriptionService {
 
-    private final SubscriptionRepository subscriptionRepository;
-    private final UserRepository         userRepository;
+    private final SubscriptionRepository    subscriptionRepository;
+    private final UserRepository            userRepository;
+    private final CurrencyConversionService currencyConversionService;
 
     @Override
     @Transactional
@@ -119,12 +121,25 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional(readOnly = true)
     public AnalyticsResponse getAnalytics(Long userId) {
+        return getAnalytics(userId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AnalyticsResponse getAnalytics(Long userId, String targetCurrency) {
         User user = getUserOrThrow(userId);
+        String finalCurrency = (targetCurrency != null && !targetCurrency.isBlank())
+                ? targetCurrency.trim().toUpperCase()
+                : (user.getPreferredCurrency() != null ? user.getPreferredCurrency() : "USD");
+
         List<Subscription> active = subscriptionRepository.findByUserIdAndIsActiveTrue(userId);
         LocalDate today = LocalDate.now();
 
         BigDecimal monthlySpend = active.stream()
-                .map(s -> normalizeToMonthly(s.getAmount(), s.getBillingCycle()))
+                .map(s -> {
+                    BigDecimal monthlyInOriginal = normalizeToMonthly(s.getAmount(), s.getBillingCycle());
+                    return currencyConversionService.convert(monthlyInOriginal, s.getCurrency(), finalCurrency);
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal annualSpend = monthlySpend.multiply(BigDecimal.valueOf(12));
@@ -133,7 +148,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .collect(Collectors.groupingBy(
                         s -> s.getCategory().name(),
                         Collectors.reducing(BigDecimal.ZERO,
-                                s -> normalizeToMonthly(s.getAmount(), s.getBillingCycle()),
+                                s -> {
+                                    BigDecimal monthlyInOriginal = normalizeToMonthly(s.getAmount(), s.getBillingCycle());
+                                    return currencyConversionService.convert(monthlyInOriginal, s.getCurrency(), finalCurrency);
+                                },
                                 BigDecimal::add)
                 ));
 
@@ -151,7 +169,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .spendByCategory(byCategory)
                 .renewingInNextSevenDays((int) renewingIn7)
                 .renewingInNextThirtyDays((int) renewingIn30)
-                .currency(user.getPreferredCurrency())
+                .currency(finalCurrency)
                 .build();
     }
 
