@@ -170,5 +170,49 @@ const api = {
             throw new Error(`Kafka trigger failed with status ${response.status}`);
         }
         return await response.text();
+    },
+
+    // ── Calendar Sync Endpoints ─────────────────────────────────────────────
+    async getCalendarSyncInfo() {
+        return await this.request('/calendar/sync-info');
+    },
+
+    // ── Monthly Executive Digest Reports ────────────────────────────────────
+    async downloadMonthlyPdf(currency = 'USD') {
+        const url = `${API_BASE}/reports/monthly-digest/pdf?currency=${currency}`;
+        const token = this.getToken();
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF report');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `SubPulse_Monthly_Digest_${new Date().toISOString().slice(0,7)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+    },
+
+    async sendMonthlyEmailDigest(currency = 'USD') {
+        const url = `${API_BASE}/reports/monthly-digest/send-email?currency=${currency}`;
+        const token = this.getToken();
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || 'Failed to dispatch monthly email digest');
+        }
+
+        return await response.text();
     }
 };

@@ -162,6 +162,15 @@ function setupEventListeners() {
 
     document.getElementById('sub-form')?.addEventListener('submit', handleSubscriptionSubmit);
 
+    // Calendar Sync Modal triggers
+    document.getElementById('btn-sync-calendar')?.addEventListener('click', openCalendarModal);
+    document.getElementById('calendar-modal-close')?.addEventListener('click', closeCalendarModal);
+    document.getElementById('btn-copy-cal-feed')?.addEventListener('click', copyCalendarFeedUrl);
+
+    // Monthly Digest Reports triggers
+    document.getElementById('btn-export-pdf')?.addEventListener('click', handleExportPdf);
+    document.getElementById('btn-email-digest')?.addEventListener('click', handleEmailDigest);
+
     // Alert Config Modal close
     document.getElementById('alert-modal-close')?.addEventListener('click', () => {
         closeAlertModal();
@@ -562,5 +571,62 @@ async function triggerKafkaEvent(subscriptionId) {
         showToast('⚡ Alert Ping dispatched successfully!', 'success');
     } catch (err) {
         showToast('Ping error: ' + err.message, 'error');
+    }
+}
+
+// ── Calendar Sync Actions ───────────────────────────────────────────────────
+async function openCalendarModal() {
+    const modal = document.getElementById('calendar-modal');
+    modal.classList.add('active');
+
+    try {
+        const info = await api.getCalendarSyncInfo();
+        document.getElementById('btn-google-cal-link').href = info.googleCalendarUrl;
+        document.getElementById('btn-apple-cal-link').href = info.webcalFeedUrl;
+        document.getElementById('btn-download-ics-link').href = info.httpFeedUrl;
+        document.getElementById('calendar-feed-url-input').value = info.httpFeedUrl;
+    } catch (err) {
+        showToast('Could not load calendar sync links: ' + err.message, 'error');
+    }
+}
+
+function closeCalendarModal() {
+    document.getElementById('calendar-modal')?.classList.remove('active');
+}
+
+function copyCalendarFeedUrl() {
+    const input = document.getElementById('calendar-feed-url-input');
+    if (!input || !input.value) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('📋 Calendar feed URL copied to clipboard!', 'success');
+    }).catch(() => {
+        input.select();
+        document.execCommand('copy');
+        showToast('📋 Calendar feed URL copied!', 'success');
+    });
+}
+
+// ── Monthly Executive Digest Actions ─────────────────────────────────────────
+async function handleExportPdf() {
+    const selectedCurrency = document.getElementById('currency-switcher')?.value || 
+                             localStorage.getItem('subpulse_display_currency') || 'USD';
+    showToast('📊 Generating your Executive Monthly PDF Report...', 'info');
+    try {
+        await api.downloadMonthlyPdf(selectedCurrency);
+        showToast('✅ Monthly PDF Report downloaded successfully!', 'success');
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function handleEmailDigest() {
+    const selectedCurrency = document.getElementById('currency-switcher')?.value || 
+                             localStorage.getItem('subpulse_display_currency') || 'USD';
+    showToast('📧 Compiling and sending Monthly Executive Digest email...', 'info');
+    try {
+        await api.sendMonthlyEmailDigest(selectedCurrency);
+        showToast('✅ Monthly digest & PDF report dispatched to your inbox!', 'success');
+    } catch (err) {
+        showToast(err.message, 'error');
     }
 }

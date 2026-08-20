@@ -115,6 +115,18 @@
                         <option value="CAD">$ CAD</option>
                     </select>
 
+                    <button id="btn-sync-calendar" class="btn btn-secondary btn-sm" title="Sync subscriptions to Google / Apple Calendar">
+                        📅 Calendar
+                    </button>
+
+                    <button id="btn-export-pdf" class="btn btn-secondary btn-sm" title="Download Executive Monthly PDF Report">
+                        📊 PDF Digest
+                    </button>
+
+                    <button id="btn-email-digest" class="btn btn-secondary btn-sm" title="Send Monthly Summary to Email">
+                        📧 Email Digest
+                    </button>
+
                     <button id="btn-add-sub" class="btn btn-primary">
                         + Add Subscription
                     </button>
@@ -128,7 +140,7 @@
                     </div>
 
                     <a href="/swagger-ui.html" target="_blank" class="btn btn-secondary btn-sm" title="Open Interactive API Docs">
-                        📖 API Docs
+                        📖 API
                     </a>
 
                     <button id="btn-logout" class="btn btn-secondary btn-icon" title="Log Out" style="color: var(--accent-rose);">
@@ -419,6 +431,60 @@
                     Save Alert Rule
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- ── Calendar Sync Modal ───────────────────────────────────────────────── -->
+    <div id="calendar-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <span>📅</span> Sync Renewals to Calendar
+                </h3>
+                <button id="calendar-modal-close" class="modal-close">✕</button>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                Subscribe once and all your renewal dates, amounts, and 7-day reminder alarms will automatically stay in sync across your devices.
+            </p>
+
+            <!-- 1-Click Sync Links -->
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px;">
+                <a id="btn-google-cal-link" href="#" target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none;">
+                    <span style="font-size: 18px;">🔵</span>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 13.5px; color: #fff;">Add to Google Calendar</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">1-click web calendar subscription</div>
+                    </div>
+                </a>
+
+                <a id="btn-apple-cal-link" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none;">
+                    <span style="font-size: 18px;">⚪</span>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 13.5px; color: #fff;">Subscribe in Apple / Outlook Calendar</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Direct webcal:// auto-updating feed</div>
+                    </div>
+                </a>
+
+                <a id="btn-download-ics-link" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none;">
+                    <span style="font-size: 18px;">💾</span>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 13.5px; color: #fff;">Download .ics File</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Standard standalone iCalendar export</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Live iCal Feed URL Copy Box -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 12px;">Live iCal Feed URL (Webcal / HTTP)</label>
+                <div style="display: flex; gap: 8px;">
+                    <input id="calendar-feed-url-input" class="form-input" type="text" readonly style="font-size: 12px; font-family: monospace; background: rgba(0,0,0,0.3);" />
+                    <button id="btn-copy-cal-feed" class="btn btn-primary btn-sm">
+                        📋 Copy
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
