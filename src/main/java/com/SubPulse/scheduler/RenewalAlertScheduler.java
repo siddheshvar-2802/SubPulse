@@ -1,7 +1,8 @@
 package com.subpulse.scheduler;
 
+import com.subpulse.dto.event.RenewalAlertEvent;
 import com.subpulse.entity.Subscription;
-import com.subpulse.notification.NotificationService;
+import com.subpulse.kafka.AlertEventProducer;
 import com.subpulse.repository.NotificationLogRepository;
 import com.subpulse.repository.SubscriptionRepository;
 import com.subpulse.enums.NotificationStatus;
@@ -13,20 +14,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Daily background job that fires renewal alerts.
+ * Daily background job that fires renewal alerts by publishing events to Kafka.
  *
  * Runs every day at 09:00 AM UTC.
  * Uses ShedLock to prevent duplicate execution across multiple server instances.
- *
- * Logic:
- *  For each configured alert window [30, 14, 7, 3, 1, 0 days]:
- *    → Find subscriptions whose nextBillingDate == today + N days
- *    → Skip if a SENT notification already exists for this subscription + days_remaining
- *    → Dispatch alert via NotificationService
  */
 @Slf4j
 @Component
@@ -37,7 +34,7 @@ public class RenewalAlertScheduler {
 
     private final SubscriptionRepository    subscriptionRepository;
     private final NotificationLogRepository notificationLogRepository;
-    private final NotificationService       notificationService;
+    private final AlertEventProducer        alertEventProducer;
 
     @Scheduled(cron = "0 0 9 * * *") // Every day at 09:00 AM UTC
     @SchedulerLock(
@@ -45,10 +42,10 @@ public class RenewalAlertScheduler {
             lockAtLeastFor = "PT5M",   // Hold lock for at least 5 minutes
             lockAtMostFor  = "PT30M"   // Release lock after 30 minutes max
     )
-    @Transactional
+    @Transactional(readOnly = true)
     public void processRenewalAlerts() {
-        log.info("=== RenewalAlertScheduler started ===");
-        int totalAlertsSent = 0;
+        log.info("=== RenewalAlertScheduler started (Kafka Streaming Mode) ===");
+        int totalEventsPublished = 0;
 
         for (int daysRemaining : ALERT_WINDOWS) {
             LocalDate targetDate = LocalDate.now().plusDays(daysRemaining);
@@ -67,16 +64,30 @@ public class RenewalAlertScheduler {
                 }
 
                 try {
-                    notificationService.dispatch(subscription, daysRemaining);
-                    totalAlertsSent++;
+                    RenewalAlertEvent event = RenewalAlertEvent.builder()
+                            .eventId(UUID.randomUUID().toString())
+                            .subscriptionId(subscription.getId())
+                            .userId(subscription.getUser().getId())
+                            .userFullName(subscription.getUser().getFullName())
+                            .userEmail(subscription.getUser().getEmail())
+                            .serviceName(subscription.getServiceName())
+                            .amount(subscription.getAmount())
+                            .currency(subscription.getCurrency())
+                            .nextBillingDate(subscription.getNextBillingDate())
+                            .daysRemaining(daysRemaining)
+                            .timestamp(LocalDateTime.now())
+                            .build();
+
+                    alertEventProducer.publishAlertEvent(event);
+                    totalEventsPublished++;
                 } catch (Exception e) {
-                    log.error("Error dispatching alert for subscription '{}': {}",
+                    log.error("Error publishing alert event for subscription '{}': {}",
                             subscription.getServiceName(), e.getMessage(), e);
                 }
             }
         }
 
-        log.info("=== RenewalAlertScheduler completed — {} alert(s) dispatched ===", totalAlertsSent);
+        log.info("=== RenewalAlertScheduler completed — {} event(s) published to Kafka ===", totalEventsPublished);
     }
 
     /**
