@@ -6,6 +6,7 @@ package com.subpulse.enums;
 public enum NotificationChannel {
     EMAIL,
     TELEGRAM,
+    WHATSAPP,
     DISCORD,
     WEBHOOK
 }
