@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.subpulse.dto.response.UserResponse;
+import com.subpulse.security.CustomUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -31,5 +35,11 @@ public class AuthController {
     @Operation(summary = "Login with email and password")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current authenticated user profile")
+    public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(authService.getCurrentUser(userDetails.getId()));
     }
 }

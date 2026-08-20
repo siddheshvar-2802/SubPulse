@@ -25,17 +25,29 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * - Public endpoints: auth, Swagger UI, API docs.
  * - Everything else requires a valid Bearer token.
  */
+import com.subpulse.security.OAuth2AuthenticationSuccessHandler;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
-    private final CustomUserDetailsService userDetailsService;
+    private final JwtAuthFilter                      jwtAuthFilter;
+    private final CustomUserDetailsService           userDetailsService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     /** Publicly accessible endpoints — no token required. */
     private static final String[] PUBLIC_ENDPOINTS = {
+            "/",
+            "/index.html",
+            "/favicon.ico",
+            "/css/**",
+            "/js/**",
+            "/images/**",
+            "/static/**",
             "/api/v1/auth/**",
+            "/oauth2/**",
+            "/login/oauth2/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/api-docs/**",
@@ -47,12 +59,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)          // Disabled: using JWT, not cookies
+                .cors(cors -> cors.configure(http))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authEndpoint -> authEndpoint.baseUri("/oauth2/authorization"))
+                        .redirectionEndpoint(redirEndpoint -> redirEndpoint.baseUri("/login/oauth2/code/*"))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

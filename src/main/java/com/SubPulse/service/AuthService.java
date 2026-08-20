@@ -7,4 +7,5 @@ import com.subpulse.dto.response.AuthResponse;
 public interface AuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
+    com.subpulse.dto.response.UserResponse getCurrentUser(Long userId);
 }

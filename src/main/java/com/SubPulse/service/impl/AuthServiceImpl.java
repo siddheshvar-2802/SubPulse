@@ -62,6 +62,14 @@ public class AuthServiceImpl implements AuthService {
         return buildAuthResponse(user);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.subpulse.exception.ResourceNotFoundException("User", userId));
+        return mapToUserResponse(user);
+    }
+
     private AuthResponse buildAuthResponse(User user) {
         String accessToken  = jwtUtils.generateAccessToken(user.getEmail());
         String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
