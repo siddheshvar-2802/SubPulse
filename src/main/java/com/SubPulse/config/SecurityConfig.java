@@ -46,6 +46,7 @@ public class SecurityConfig {
             "/images/**",
             "/static/**",
             "/api/v1/auth/**",
+            "/api/v1/calendar/feed.ics",
             "/oauth2/**",
             "/login/oauth2/**",
             "/swagger-ui/**",
