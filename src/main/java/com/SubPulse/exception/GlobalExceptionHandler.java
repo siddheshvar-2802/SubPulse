@@ -71,13 +71,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    /** Handles invalid JSON or unknown enum values. */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("Malformed JSON / unreadable message at {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Invalid request format or unrecognized channel value. Please ensure the backend is restarted.", request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        log.warn("Illegal argument at {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     /** Catch-all for any unhandled exception — prevents leaking stack traces. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(
             Exception ex, HttpServletRequest request) {
         log.error("Unhandled exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred. Please try again.", request);
+                "An unexpected error occurred: " + ex.getMessage(), request);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(

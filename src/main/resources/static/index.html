@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubPulse — Smart SaaS & Subscription Renewal Engine</title>
+    <meta name="description" content="Track your recurring SaaS subscriptions, get proactive renewal notifications, and analyze your spend.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             1. AUTH VIEW (Login & Register)
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div id="auth-view" class="auth-wrapper">
+            <div class="auth-card">
+                <div style="text-align: center; margin-bottom: 28px;">
+                    <div class="brand-icon" style="margin: 0 auto 12px; width: 48px; height: 48px; font-size: 24px;">⚡</div>
+                    <h1 class="brand-title" style="font-size: 24px;">SubPulse</h1>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Smart Subscription & Renewal Risk Engine</p>
+                </div>
+
+                <!-- Social Login Buttons -->
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                    <a href="/oauth2/authorization/google" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255,255,255,0.06); text-decoration: none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.4l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.7c-.2-.7-.4-1.4-.4-2.2s.2-1.5.4-2.2L1.9 7.4C.7 9.8 0 12.3 0 15s.7 5.2 1.9 7.6l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.4C3.7 20.3 7.5 23 12 23z"/></svg>
+                        <span>Continue with Google</span>
+                    </a>
+                    <a href="/oauth2/authorization/github" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255,255,255,0.06); text-decoration: none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                        <span>Continue with GitHub</span>
+                    </a>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 18px 0; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;">
+                    <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+                    <span style="padding: 0 12px;">or with email</span>
+                    <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+                </div>
+
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-tab="login">Log In</div>
+                    <div class="auth-tab" data-tab="register">Create Account</div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label" for="login-email">Email Address</label>
+                        <input class="form-input" type="email" id="login-email" required placeholder="you@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="login-password">Password</label>
+                        <input class="form-input" type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Sign In to SubPulse
+                    </button>
+                    <button type="button" id="btn-autofill-demo" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 12px;">
+                        ⚡ Quick Fill Demo User
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label" for="reg-fullname">Full Name</label>
+                        <input class="form-input" type="text" id="reg-fullname" required placeholder="Alex Mercer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-email">Email Address</label>
+                        <input class="form-input" type="email" id="reg-email" required placeholder="you@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-password">Password</label>
+                        <input class="form-input" type="password" id="reg-password" required placeholder="At least 6 characters">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Create Free Account
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             2. DASHBOARD VIEW (Authenticated)
+             ═══════════════════════════════════════════════════════════════════ -->
+        <div id="dashboard-view" style="display: none;">
+
+            <!-- Header -->
+            <header class="app-header">
+                <div class="brand">
+                    <div class="brand-icon">⚡</div>
+                    <div>
+                        <div class="brand-title">SubPulse</div>
+                        <div class="brand-subtitle">Renewal Risk Engine</div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <select id="currency-switcher" class="form-select btn-sm" style="background: rgba(255, 255, 255, 0.08); border-color: var(--border-subtle); color: #fff; font-weight: 700; cursor: pointer; padding: 6px 12px; border-radius: var(--radius-sm);" title="Switch Analytics Display Currency">
+                        <option value="INR">₹ INR</option>
+                        <option value="USD">$ USD</option>
+                        <option value="EUR">€ EUR</option>
+                        <option value="GBP">£ GBP</option>
+                        <option value="CAD">$ CAD</option>
+                    </select>
+
+                    <button id="btn-add-sub" class="btn btn-primary">
+                        + Add Subscription
+                    </button>
+
+                    <div class="user-badge" title="User Profile">
+                        <div id="user-avatar-initial" class="user-avatar">U</div>
+                        <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
+                            <span id="user-name-display" style="font-size: 13px; font-weight: 700; color: #fff;">User</span>
+                            <span id="user-email-display" style="font-size: 11px; color: var(--text-muted);">user@subpulse.io</span>
+                        </div>
+                    </div>
+
+                    <a href="/swagger-ui.html" target="_blank" class="btn btn-secondary btn-sm" title="Open Interactive API Docs">
+                        📖 API Docs
+                    </a>
+
+                    <button id="btn-logout" class="btn btn-secondary btn-icon" title="Log Out" style="color: var(--accent-rose);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- KPI Stats Ribbon -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Monthly Spend</span>
+                        <span class="stat-icon">💳</span>
+                    </div>
+                    <div id="stat-monthly-spend" class="stat-value">USD 0.00</div>
+                    <div class="stat-sub">Normalized recurring monthly cost</div>
+                </div>
+
+                <div class="stat-card stat-cyan">
+                    <div class="stat-header">
+                        <span class="stat-title">Projected Annual</span>
+                        <span class="stat-icon">📈</span>
+                    </div>
+                    <div id="stat-annual-spend" class="stat-value">USD 0.00</div>
+                    <div class="stat-sub">12-month forward commitment</div>
+                </div>
+
+                <div class="stat-card stat-emerald">
+                    <div class="stat-header">
+                        <span class="stat-title">Active Subscriptions</span>
+                        <span class="stat-icon">📦</span>
+                    </div>
+                    <div id="stat-active-count" class="stat-value">0</div>
+                    <div class="stat-sub">Currently monitored services</div>
+                </div>
+
+                <div class="stat-card stat-rose">
+                    <div class="stat-header">
+                        <span class="stat-title">Renewing in 7 Days</span>
+                        <span class="stat-icon">🚨</span>
+                    </div>
+                    <div id="stat-renewing-7d" class="stat-value">0</div>
+                    <div class="stat-sub">Requires attention / alert check</div>
+                </div>
+            </section>
+
+            <!-- AI Smart Cost Optimization Insights Ribbon -->
+            <section id="ai-insights-section" class="panel" style="margin-bottom: 24px; border: 1px solid rgba(99, 102, 241, 0.25); background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%);">
+                <div class="panel-header" style="border-bottom: 1px solid rgba(99, 102, 241, 0.15); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px;">🤖</div>
+                        <div>
+                            <h2 class="panel-title" style="color: #fff; font-size: 16px; font-weight: 700;">AI Spend Optimization & Risk Engine</h2>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Smart detection of redundant services, billing plan arbitrage, and trial safeguards</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600;">Optimization Score</div>
+                            <div id="ai-health-score" style="font-size: 17px; font-weight: 800; color: var(--accent-emerald);">-- / 100</div>
+                        </div>
+                        <div id="ai-savings-badge" class="badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px; padding: 6px 12px; font-weight: 700;">
+                            Potential Savings: <span id="ai-total-savings">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ai-recommendations-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; padding: 18px 0 6px;">
+                    <!-- Dynamically loaded -->
+                </div>
+            </section>
+
+            <!-- Main Content Grid -->
+            <div class="dashboard-grid">
+
+                <!-- Left Column: Subscriptions Table -->
+                <div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title">
+                                <span>📋</span>
+                                <span>Tracked Subscriptions</span>
+                            </h2>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="subs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Category</th>
+                                        <th>Billing</th>
+                                        <th>Next Renewal</th>
+                                        <th>Active</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subs-table-body">
+                                    <!-- Dynamic rows loaded by app.js -->
+                                </tbody>
+                            </table>
+
+                            <div id="subs-empty-state" style="text-align: center; padding: 40px 20px; display: none;">
+                                <div style="font-size: 36px; margin-bottom: 10px;">📦</div>
+                                <h3 style="font-size: 16px; margin-bottom: 6px;">No subscriptions tracked yet</h3>
+                                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 18px;">Add your first subscription to start monitoring renewal dates and alerts.</p>
+                                <button class="btn btn-primary" onclick="openSubscriptionModal()">+ Add Your First Subscription</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Sidebar Analytics & Upcoming -->
+                <div>
+                    <!-- Upcoming Renewals Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title" style="font-size: 14.5px;">
+                                <span>⏰</span>
+                                <span>Upcoming Renewals</span>
+                            </h2>
+                        </div>
+                        <div id="upcoming-list-container" class="upcoming-list">
+                            <!-- Dynamic items -->
+                        </div>
+                    </div>
+
+                    <!-- Category Spend Breakdown Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2 class="panel-title" style="font-size: 14.5px;">
+                                <span>📊</span>
+                                <span>Spend by Category</span>
+                            </h2>
+                        </div>
+                        <div id="category-bars-container">
+                            <!-- Dynamic category progress bars -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         3. MODALS
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Add / Edit Subscription Modal -->
+    <div id="sub-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="sub-modal-title" class="modal-title">Add Subscription</h3>
+                <button id="sub-modal-close" class="modal-close">✕</button>
+            </div>
+            <form id="sub-form">
+                <div class="form-group">
+                    <label class="form-label" for="sub-name">Service Name *</label>
+                    <input class="form-input" type="text" id="sub-name" required placeholder="e.g. GitHub Copilot, Netflix, AWS">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="sub-amount">Amount *</label>
+                        <input class="form-input" type="number" step="0.01" min="0.01" id="sub-amount" required placeholder="10.00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="sub-currency">Currency</label>
+                        <select class="form-select" id="sub-currency">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="INR">INR (₹)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="CAD">CAD ($)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="sub-cycle">Billing Cycle *</label>
+                        <select class="form-select" id="sub-cycle">
+                            <option value="MONTHLY">Monthly</option>
+                            <option value="ANNUAL">Annual / Yearly</option>
+                            <option value="QUARTERLY">Quarterly (3 Mo)</option>
+                            <option value="WEEKLY">Weekly</option>
+                            <option value="TRIAL">Trial</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="sub-category">Category</label>
+                        <select class="form-select" id="sub-category">
+                            <option value="DEVELOPER_TOOLS">Developer Tools</option>
+                            <option value="AI_TOOLS">AI Tools</option>
+                            <option value="ENTERTAINMENT">Entertainment</option>
+                            <option value="PRODUCTIVITY">Productivity</option>
+                            <option value="CLOUD_STORAGE">Cloud & Hosting</option>
+                            <option value="DESIGN">Design</option>
+                            <option value="FINANCE">Finance</option>
+                            <option value="SECURITY">Security</option>
+                            <option value="COMMUNICATION">Communication</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="sub-start-date">Start Date *</label>
+                        <input class="form-input" type="date" id="sub-start-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="sub-billing-date">Next Renewal Date *</label>
+                        <input class="form-input" type="date" id="sub-billing-date" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sub-desc">Description / Plan Notes</label>
+                    <input class="form-input" type="text" id="sub-desc" placeholder="e.g. Pro tier with 5 team seats">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sub-url">Website URL</label>
+                    <input class="form-input" type="url" id="sub-url" placeholder="https://github.com">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeSubscriptionModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Subscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert Configuration Rules Modal -->
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="alert-modal-title" class="modal-title">Alert Rules</h3>
+                <button id="alert-modal-close" class="modal-close">✕</button>
+            </div>
+
+            <!-- Existing Rules List -->
+            <div id="alert-rules-list" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
+                <!-- Dynamically loaded -->
+            </div>
+
+            <!-- Add Alert Rule Form -->
+            <form id="alert-form" style="border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+                <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text-secondary);">+ Add New Alert Rule</h4>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="alert-days">Days Before Renewal</label>
+                        <select class="form-select" id="alert-days">
+                            <option value="1">1 Day Before</option>
+                            <option value="3">3 Days Before</option>
+                            <option value="7" selected>7 Days Before</option>
+                            <option value="14">14 Days Before</option>
+                            <option value="30">30 Days Before</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="alert-channel">Channel</label>
+                        <select class="form-select" id="alert-channel">
+                            <option value="EMAIL">📧 Email</option>
+                            <option value="WHATSAPP">💬 WhatsApp</option>
+                            <option value="TELEGRAM">✈️ Telegram</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="alert-dest">Destination Phone / Chat ID</label>
+                    <input class="form-input" type="text" id="alert-dest" placeholder="e.g. +919876543210 (WhatsApp) or Chat ID">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">
+                    Save Alert Rule
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="/js/api.js"></script>
+    <script src="/js/charts.js"></script>
+    <script src="/js/app.js"></script>
+
+</body>
+</html>

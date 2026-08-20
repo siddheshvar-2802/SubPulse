@@ -47,6 +47,24 @@ spring:
       port: 6379
       timeout: 2000ms
 
+  # ── OAuth2 Social Login (Google & GitHub) ───────────────────────────────────
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:google-client-id-placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:google-client-secret-placeholder}
+            scope:
+              - email
+              - profile
+          github:
+            client-id: ${GITHUB_CLIENT_ID:github-client-id-placeholder}
+            client-secret: ${GITHUB_CLIENT_SECRET:github-client-secret-placeholder}
+            scope:
+              - user:email
+              - read:user
+
   # ── Email (Gmail SMTP) ──────────────────────────────────────────────────────
   mail:
     host: smtp.gmail.com
@@ -62,15 +80,19 @@ spring:
 
   # ── Kafka ────────────────────────────────────────────────────────────────────
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: subpulse-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.subpulse.*"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        max.block.ms: 2000
 
 # ── Server ────────────────────────────────────────────────────────────────────
 server:
@@ -82,6 +104,13 @@ app:
     secret: ${JWT_SECRET:myDevSecretKeyThatIsAtLeast256BitsLong1234567890ABCDEF}
     expiration-ms: 86400000        # 24 hours
     refresh-expiration-ms: 604800000  # 7 days
+  whatsapp:
+    twilio:
+      account-sid: ${TWILIO_ACCOUNT_SID:twilio-account-sid-placeholder}
+      auth-token: ${TWILIO_AUTH_TOKEN:twilio-auth-token-placeholder}
+      from-number: ${TWILIO_WHATSAPP_FROM:+14155238886}
+    callmebot:
+      api-key: ${CALLMEBOT_API_KEY:}
 
 # ── Swagger / OpenAPI ─────────────────────────────────────────────────────────
 springdoc:
@@ -96,8 +125,10 @@ springdoc:
 logging:
   level:
     com.subpulse: DEBUG
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
     org.hibernate.SQL: DEBUG
+    org.apache.kafka: ERROR
+    org.springframework.kafka: ERROR
 
 # ───────────────────────────────────────────────────────────────────────────────
 # PROD PROFILE — All values from environment variables (never hardcode secrets!)
@@ -136,6 +167,24 @@ spring:
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
 
+  # ── OAuth2 Social Login (Google & GitHub) ───────────────────────────────────
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:google-client-id-placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:google-client-secret-placeholder}
+            scope:
+              - email
+              - profile
+#          github:
+#            client-id: ${GITHUB_CLIENT_ID}
+#            client-secret: ${GITHUB_CLIENT_SECRET}
+#            scope:
+#              - user:email
+#              - read:user
+
   # ── Email (Gmail SMTP) ──────────────────────────────────────────────────────
   mail:
     host: smtp.gmail.com
@@ -156,10 +205,12 @@ spring:
       group-id: subpulse-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.subpulse.*"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 # ── Server ────────────────────────────────────────────────────────────────────
 server:
