@@ -214,5 +214,38 @@ const api = {
         }
 
         return await response.text();
+    },
+
+    // ── Bank Statement & CSV Auto-Import ────────────────────────────────────
+    async previewCsvImport(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const url = `${API_BASE}/subscriptions/import/preview`;
+        const token = this.getToken();
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => null);
+            throw new Error(err?.message || 'Failed to parse CSV statement');
+        }
+
+        return await response.json();
+    },
+
+    async confirmCsvImport(subscriptions) {
+        return await this.request('/subscriptions/import/confirm', {
+            method: 'POST',
+            body: JSON.stringify({ subscriptions })
+        });
+    },
+
+    downloadCsvTemplate() {
+        const url = `${API_BASE}/subscriptions/import/template`;
+        window.open(url, '_blank');
     }
 };

@@ -25,13 +25,16 @@ function showToast(message, type = 'info') {
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
+        toast.style.transform = 'translateY(-10px) scale(0.95)';
         setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
 
 // ── Init & View Routing ─────────────────────────────────────────────────────
+initTheme();
+
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     checkAuth();
     setupEventListeners();
 });
@@ -171,6 +174,49 @@ function setupEventListeners() {
     document.getElementById('btn-export-pdf')?.addEventListener('click', handleExportPdf);
     document.getElementById('btn-email-digest')?.addEventListener('click', handleEmailDigest);
 
+    // Theme Toggle trigger
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', toggleTheme);
+
+    // Bank Statement & CSV Auto-Importer triggers
+    document.getElementById('btn-open-import')?.addEventListener('click', openImportModal);
+    document.getElementById('import-modal-close')?.addEventListener('click', closeImportModal);
+    document.getElementById('btn-download-sample-csv')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        api.downloadCsvTemplate();
+    });
+
+    const dropzone = document.getElementById('import-dropzone');
+    const fileInput = document.getElementById('csv-file-input');
+
+    dropzone?.addEventListener('click', () => fileInput?.click());
+    dropzone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--primary-hover)';
+        dropzone.style.background = 'rgba(99, 102, 241, 0.12)';
+    });
+    dropzone?.addEventListener('dragleave', () => {
+        dropzone.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+        dropzone.style.background = 'rgba(99, 102, 241, 0.04)';
+    });
+    dropzone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+        dropzone.style.background = 'rgba(99, 102, 241, 0.04)';
+        if (e.dataTransfer.files?.length) {
+            handleCsvFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput?.addEventListener('change', (e) => {
+        if (e.target.files?.length) {
+            handleCsvFile(e.target.files[0]);
+        }
+    });
+
+    document.getElementById('btn-toggle-select-all')?.addEventListener('click', toggleSelectAllImport);
+    document.getElementById('btn-cancel-import')?.addEventListener('click', resetImportModal);
+    document.getElementById('btn-confirm-import')?.addEventListener('click', handleConfirmImport);
+
     // Alert Config Modal close
     document.getElementById('alert-modal-close')?.addEventListener('click', () => {
         closeAlertModal();
@@ -247,22 +293,26 @@ function renderAiOptimization(aiOpt) {
         const savingsText = Number(rec.potentialAnnualSavings || 0) > 0 ? `Save ${rec.currency} ${Number(rec.potentialAnnualSavings).toFixed(2)}/yr` : 'Review Plan';
 
         html += `
-            <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: var(--transition);">
+            <div class="ai-card-item" style="background: rgba(15, 23, 42, 0.85); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: var(--transition);">
                 <div>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                         <span class="badge ${typeBadgeClass}" style="font-size: 11px;">${typeLabel}</span>
                         <span style="font-weight: 800; font-size: 12.5px; color: #34d399;">${savingsText}</span>
                     </div>
-                    <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-bottom: 4px;">${rec.title}</div>
+                    <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary); margin-bottom: 4px;">${rec.title}</div>
                     <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">${rec.description}</div>
                 </div>
-                ${rec.actionUrl ? `
-                    <div style="margin-top: 14px;">
+                <div style="margin-top: 14px;">
+                    ${rec.actionUrl ? `
                         <a href="${rec.actionUrl}" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%; text-align: center; text-decoration: none; display: block; font-size: 12px;">
                             ${rec.actionLabel || 'Manage Plan'} ↗
                         </a>
-                    </div>
-                ` : ''}
+                    ` : `
+                        <a href="#dashboard-table-card" onclick="document.getElementById('search-input')?.focus()" class="btn btn-secondary btn-sm" style="width: 100%; text-align: center; text-decoration: none; display: block; font-size: 12px;">
+                            Review in Table 📋
+                        </a>
+                    `}
+                </div>
             </div>
         `;
     });
@@ -301,11 +351,17 @@ function renderUpcoming(upcoming) {
         const badgeClass = diffDays <= 3 ? 'badge-urgent' : diffDays <= 7 ? 'badge-warning' : 'badge-ok';
         const label = diffDays === 0 ? 'Today!' : diffDays === 1 ? 'Tomorrow' : `in ${diffDays}d`;
 
+        const uLogo = getServiceLogoUrl(sub.serviceName, sub.websiteUrl);
         html += `
             <div class="upcoming-item">
-                <div>
-                    <div style="font-weight: 600; font-size: 13.5px;">${sub.serviceName}</div>
-                    <div style="font-size: 11.5px; color: var(--text-muted);">${sub.currency} ${Number(sub.amount).toFixed(2)} / ${sub.billingCycle.toLowerCase()}</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        ${uLogo ? `<img src="${uLogo}" alt="${sub.serviceName}" style="width: 18px; height: 18px; object-fit: contain;" />` : `<span>⚡</span>`}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 13.5px; color: var(--text-primary);">${escapeHtml(sub.serviceName)}</div>
+                        <div style="font-size: 11.5px; color: var(--text-muted);">${sub.currency} ${Number(sub.amount).toFixed(2)} / ${sub.billingCycle.toLowerCase()}</div>
+                    </div>
                 </div>
                 <span class="badge ${badgeClass}">${label}</span>
             </div>
@@ -333,15 +389,23 @@ function renderSubscriptionsTable(subscriptions) {
     subscriptions.forEach(sub => {
         const initial = sub.serviceName ? sub.serviceName[0].toUpperCase() : 'S';
         const color = charts.getColor(sub.category);
+        const logoUrl = getServiceLogoUrl(sub.serviceName, sub.websiteUrl);
 
         html += `
             <tr>
                 <td>
                     <div class="service-cell">
-                        <div class="service-icon" style="background: ${color}22; color: ${color}; border-color: ${color}44;">${initial}</div>
+                        <div class="service-icon" style="background: rgba(255, 255, 255, 0.04); border-color: ${color}33;">
+                            ${logoUrl ? `
+                                <img src="${logoUrl}" alt="${sub.serviceName}" style="width: 22px; height: 22px; object-fit: contain; border-radius: 4px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                                <span style="display: none; color: ${color};">${initial}</span>
+                            ` : `
+                                <span style="color: ${color};">${initial}</span>
+                            `}
+                        </div>
                         <div>
-                            <div class="service-name">${sub.serviceName}</div>
-                            <div class="service-desc">${sub.description || 'No description'}</div>
+                            <div class="service-name">${escapeHtml(sub.serviceName)}</div>
+                            <div class="service-desc">${escapeHtml(sub.description || 'No description')}</div>
                         </div>
                     </div>
                 </td>
@@ -349,11 +413,14 @@ function renderSubscriptionsTable(subscriptions) {
                     <span class="badge badge-category">${sub.category.replace('_', ' ')}</span>
                 </td>
                 <td>
-                    <div style="font-weight: 700; color: #fff;">${sub.currency} ${Number(sub.amount).toFixed(2)}</div>
+                    <div style="font-weight: 700; color: var(--text-primary);">${sub.currency} ${Number(sub.amount).toFixed(2)}</div>
                     <span class="badge badge-cycle">${sub.billingCycle}</span>
                 </td>
-                <td>
-                    <div style="font-weight: 500;">${sub.nextBillingDate}</div>
+                <td style="width: 105px; white-space: nowrap;">
+                    <div style="line-height: 1.25;">
+                        <div style="font-weight: 700; color: var(--text-primary); font-size: 12.5px;">${formatCompactDate(sub.nextBillingDate)}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${formatRelativeDays(sub.nextBillingDate)}</div>
+                    </div>
                 </td>
                 <td>
                     <label class="toggle-switch">
@@ -629,4 +696,268 @@ async function handleEmailDigest() {
     } catch (err) {
         showToast(err.message, 'error');
     }
+}
+
+// ── Bank Statement & CSV Auto-Importer Actions ──────────────────────────────
+let detectedImportList = [];
+
+function openImportModal() {
+    resetImportModal();
+    document.getElementById('import-modal')?.classList.add('active');
+}
+
+function closeImportModal() {
+    document.getElementById('import-modal')?.classList.remove('active');
+}
+
+function resetImportModal() {
+    detectedImportList = [];
+    const dropzone = document.getElementById('import-dropzone');
+    const loading = document.getElementById('import-loading');
+    const preview = document.getElementById('import-preview-section');
+    const fileInput = document.getElementById('csv-file-input');
+
+    if (dropzone) dropzone.style.display = 'block';
+    if (loading) loading.style.display = 'none';
+    if (preview) preview.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+}
+
+async function handleCsvFile(file) {
+    if (!file) return;
+
+    const dropzone = document.getElementById('import-dropzone');
+    const loading = document.getElementById('import-loading');
+    const preview = document.getElementById('import-preview-section');
+
+    dropzone.style.display = 'none';
+    loading.style.display = 'block';
+    preview.style.display = 'none';
+
+    try {
+        const detected = await api.previewCsvImport(file);
+        detectedImportList = detected || [];
+
+        loading.style.display = 'none';
+
+        if (detectedImportList.length === 0) {
+            showToast('No recognizable recurring subscriptions found in this statement.', 'warning');
+            resetImportModal();
+            return;
+        }
+
+        renderImportPreviewTable(detectedImportList);
+        preview.style.display = 'block';
+        showToast(`⚡ Detected ${detectedImportList.length} recurring subscriptions!`, 'success');
+    } catch (err) {
+        loading.style.display = 'none';
+        dropzone.style.display = 'block';
+        showToast('CSV parse error: ' + err.message, 'error');
+    }
+}
+
+function renderImportPreviewTable(items) {
+    const tbody = document.getElementById('import-preview-tbody');
+    const countEl = document.getElementById('detected-count');
+    if (countEl) countEl.textContent = items.length;
+
+    const categoryOptions = [
+        'AI_TOOLS', 'ENTERTAINMENT', 'DEVELOPER_TOOLS', 'PRODUCTIVITY',
+        'DESIGN', 'CLOUD_STORAGE', 'SECURITY', 'COMMUNICATION', 'FINANCE', 'OTHER'
+    ];
+
+    const cycleOptions = ['MONTHLY', 'ANNUAL', 'QUARTERLY', 'WEEKLY'];
+
+    tbody.innerHTML = items.map((item, idx) => {
+        const isChecked = !item.alreadyTracked;
+        const trackedBadge = item.alreadyTracked 
+            ? `<span style="font-size: 10px; color: var(--accent-amber); margin-left: 6px;">(Already Tracked)</span>` 
+            : '';
+
+        return `
+            <tr id="row-${item.tempId}" style="${item.alreadyTracked ? 'opacity: 0.65;' : ''}">
+                <td style="text-align: center;">
+                    <input type="checkbox" class="import-checkbox" data-temp-id="${item.tempId}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary-color);" />
+                </td>
+                <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">${escapeHtml(item.serviceName)}${trackedBadge}</div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-family: monospace; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(item.rawDescription || '')}</div>
+                </td>
+                <td>
+                    <select id="cat-${item.tempId}" class="form-select btn-sm" style="font-size: 11.5px; padding: 4px 6px; background: var(--bg-input); border-color: var(--border-subtle); color: var(--text-primary);">
+                        ${categoryOptions.map(c => `<option value="${c}" ${c === item.category ? 'selected' : ''}>${formatCategory(c)}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select id="cycle-${item.tempId}" class="form-select btn-sm" style="font-size: 11.5px; padding: 4px 6px; background: var(--bg-input); border-color: var(--border-subtle); color: var(--text-primary);">
+                        ${cycleOptions.map(cy => `<option value="${cy}" ${cy === item.billingCycle ? 'selected' : ''}>${cy}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 11px; color: var(--text-muted);">${item.currency || 'USD'}</span>
+                        <input id="amt-${item.tempId}" type="number" step="0.01" value="${item.amount}" style="width: 70px; font-size: 12px; font-weight: 700; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary); padding: 4px;" />
+                    </div>
+                </td>
+                <td>
+                    <input id="date-${item.tempId}" type="date" value="${item.nextBillingDate || ''}" style="font-size: 11.5px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-primary); padding: 4px;" />
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function toggleSelectAllImport() {
+    const checkboxes = document.querySelectorAll('.import-checkbox');
+    const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+    checkboxes.forEach(cb => cb.checked = anyUnchecked);
+}
+
+async function handleConfirmImport() {
+    const checkboxes = document.querySelectorAll('.import-checkbox:checked');
+    if (checkboxes.length === 0) {
+        showToast('Please select at least one subscription to import.', 'warning');
+        return;
+    }
+
+    const payloadList = [];
+
+    checkboxes.forEach(cb => {
+        const tempId = cb.dataset.tempId;
+        const orig = detectedImportList.find(d => d.tempId === tempId);
+        if (!orig) return;
+
+        const catEl = document.getElementById(`cat-${tempId}`);
+        const cycleEl = document.getElementById(`cycle-${tempId}`);
+        const amtEl = document.getElementById(`amt-${tempId}`);
+        const dateEl = document.getElementById(`date-${tempId}`);
+
+        payloadList.push({
+            serviceName: orig.serviceName,
+            amount: parseFloat(amtEl?.value || orig.amount),
+            currency: orig.currency || 'USD',
+            category: catEl?.value || orig.category || 'OTHER',
+            billingCycle: cycleEl?.value || orig.billingCycle || 'MONTHLY',
+            startDate: orig.transactionDate || new Date().toISOString().slice(0, 10),
+            nextBillingDate: dateEl?.value || orig.nextBillingDate || new Date().toISOString().slice(0, 10),
+            websiteUrl: orig.websiteUrl || null,
+            description: `Auto-imported from statement line: ${orig.rawDescription || orig.serviceName}`
+        });
+    });
+
+    showToast(`⚡ Importing ${payloadList.length} subscriptions...`, 'info');
+
+    try {
+        await api.confirmCsvImport(payloadList);
+        showToast(`🎉 Successfully imported ${payloadList.length} subscriptions!`, 'success');
+        closeImportModal();
+        loadDashboardData();
+    } catch (err) {
+        showToast('Import failed: ' + err.message, 'error');
+    }
+}
+
+// ── Compact Date Formatting Helpers ─────────────────────────────────────────
+function formatCompactDate(dateStr) {
+    if (!dateStr) return '--';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const year = parts[0].length === 4 ? parts[0].slice(2) : parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        if (monthIndex >= 0 && monthIndex < 12) {
+            return `${day} ${months[monthIndex]} ${year}`;
+        }
+    }
+    return dateStr;
+}
+
+function formatRelativeDays(dateStr) {
+    if (!dateStr) return '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr + 'T00:00:00');
+    const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return `<span style="color: var(--accent-rose); font-weight: 700;">Today!</span>`;
+    if (diffDays === 1) return `<span style="color: var(--accent-amber); font-weight: 700;">Tomorrow</span>`;
+    if (diffDays > 1) return `in ${diffDays}d`;
+    if (diffDays < 0) return `${Math.abs(diffDays)}d ago`;
+    return '';
+}
+
+// ── Official Service Logo Resolver ──────────────────────────────────────────
+function getServiceLogoUrl(serviceName, websiteUrl) {
+    let domain = '';
+    if (websiteUrl) {
+        try {
+            const parsed = new URL(websiteUrl.startsWith('http') ? websiteUrl : 'https://' + websiteUrl);
+            domain = parsed.hostname.replace(/^www\./, '');
+        } catch (e) {}
+    }
+    if (!domain && serviceName) {
+        const lower = serviceName.toLowerCase();
+        if (lower.includes('netflix')) domain = 'netflix.com';
+        else if (lower.includes('apple') || lower.includes('icloud') || lower.includes('itunes')) domain = 'apple.com';
+        else if (lower.includes('amazon') || lower.includes('prime')) domain = 'amazon.com';
+        else if (lower.includes('spotify')) domain = 'spotify.com';
+        else if (lower.includes('chatgpt') || lower.includes('openai')) domain = 'openai.com';
+        else if (lower.includes('claude') || lower.includes('anthropic')) domain = 'claude.ai';
+        else if (lower.includes('cursor')) domain = 'cursor.com';
+        else if (lower.includes('github')) domain = 'github.com';
+        else if (lower.includes('google') || lower.includes('youtube')) domain = 'google.com';
+        else if (lower.includes('adobe')) domain = 'adobe.com';
+        else if (lower.includes('figma')) domain = 'figma.com';
+        else if (lower.includes('canva')) domain = 'canva.com';
+        else if (lower.includes('notion')) domain = 'notion.so';
+        else if (lower.includes('zoom')) domain = 'zoom.us';
+        else if (lower.includes('slack')) domain = 'slack.com';
+        else if (lower.includes('discord')) domain = 'discord.com';
+        else if (lower.includes('microsoft') || lower.includes('office') || lower.includes('msft')) domain = 'microsoft.com';
+        else if (lower.includes('disney') || lower.includes('hotstar')) domain = 'disneyplus.com';
+        else if (lower.includes('nordvpn')) domain = 'nordvpn.com';
+        else if (lower.includes('1password')) domain = '1password.com';
+        else if (lower.includes('dropbox')) domain = 'dropbox.com';
+        else if (lower.includes('hulu')) domain = 'hulu.com';
+        else if (lower.includes('max') || lower.includes('hbo')) domain = 'max.com';
+        else {
+            const clean = lower.replace(/[^a-z0-9]/g, '');
+            if (clean && clean.length > 2) domain = `${clean}.com`;
+        }
+    }
+    return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
+}
+
+// ── HTML Sanitizer Helper ───────────────────────────────────────────────────
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// ── Dark / Light Theme Manager ──────────────────────────────────────────────
+function initTheme() {
+    const savedTheme = localStorage.getItem('subpulse_theme') || 'dark';
+    applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('subpulse_theme', theme);
+    const icon = document.getElementById('theme-icon');
+    if (icon) {
+        icon.textContent = theme === 'light' ? '☀️' : '🌙';
+    }
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    showToast(`Switched to ${next === 'dark' ? 'Dark Mode 🌙' : 'Light Mode ☀️'}`, 'info');
 }

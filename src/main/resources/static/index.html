@@ -11,7 +11,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- CSS -->
+    <!-- CSS & Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
@@ -107,7 +108,7 @@
                 </div>
 
                 <div class="header-actions">
-                    <select id="currency-switcher" class="form-select btn-sm" style="background: rgba(255, 255, 255, 0.08); border-color: var(--border-subtle); color: #fff; font-weight: 700; cursor: pointer; padding: 6px 12px; border-radius: var(--radius-sm);" title="Switch Analytics Display Currency">
+                    <select id="currency-switcher" class="form-select btn-sm" title="Switch Analytics Display Currency">
                         <option value="INR">₹ INR</option>
                         <option value="USD">$ USD</option>
                         <option value="EUR">€ EUR</option>
@@ -120,11 +121,15 @@
                     </button>
 
                     <button id="btn-export-pdf" class="btn btn-secondary btn-sm" title="Download Executive Monthly PDF Report">
-                        📊 PDF Digest
+                        📊 PDF
                     </button>
 
                     <button id="btn-email-digest" class="btn btn-secondary btn-sm" title="Send Monthly Summary to Email">
-                        📧 Email Digest
+                        📧 Digest
+                    </button>
+
+                    <button id="btn-open-import" class="btn btn-secondary btn-sm" title="Auto-detect & import subscriptions from bank statement CSV">
+                        📥 Import CSV
                     </button>
 
                     <button id="btn-add-sub" class="btn btn-primary">
@@ -134,14 +139,50 @@
                     <div class="user-badge" title="User Profile">
                         <div id="user-avatar-initial" class="user-avatar">U</div>
                         <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
-                            <span id="user-name-display" style="font-size: 13px; font-weight: 700; color: #fff;">User</span>
+                            <span id="user-name-display" style="font-size: 13px; font-weight: 700; color: var(--text-primary);">User</span>
                             <span id="user-email-display" style="font-size: 11px; color: var(--text-muted);">user@subpulse.io</span>
                         </div>
                     </div>
 
-                    <a href="/swagger-ui.html" target="_blank" class="btn btn-secondary btn-sm" title="Open Interactive API Docs">
-                        📖 API
-                    </a>
+                    <!-- Dribbble-Style Animated Theme Toggle Switch -->
+                    <button id="theme-toggle-btn" class="theme-toggle-switch" aria-label="Toggle Dark and Light Mode" title="Toggle Light / Dark Mode">
+                        <div class="toggle-track">
+                            <span class="track-icon sun-icon">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                            </span>
+                            <span class="track-icon moon-icon">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                            </span>
+                            <div class="toggle-thumb">
+                                <svg class="thumb-icon-sun" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                                <svg class="thumb-icon-moon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
 
                     <button id="btn-logout" class="btn btn-secondary btn-icon" title="Log Out" style="color: var(--accent-rose);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -198,7 +239,7 @@
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px;">🤖</div>
                         <div>
-                            <h2 class="panel-title" style="color: #fff; font-size: 16px; font-weight: 700;">AI Spend Optimization & Risk Engine</h2>
+                            <h2 class="panel-title" style="color: var(--text-primary); font-size: 16px; font-weight: 700;">AI Spend Optimization & Risk Engine</h2>
                             <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Smart detection of redundant services, billing plan arbitrage, and trial safeguards</p>
                         </div>
                     </div>
@@ -238,7 +279,7 @@
                                         <th>Service</th>
                                         <th>Category</th>
                                         <th>Billing</th>
-                                        <th>Next Renewal</th>
+                                        <th style="width: 105px; white-space: nowrap;">Renewal</th>
                                         <th>Active</th>
                                         <th>Actions</th>
                                     </tr>
@@ -453,7 +494,7 @@
                 <a id="btn-google-cal-link" href="#" target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none;">
                     <span style="font-size: 18px;">🔵</span>
                     <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 13.5px; color: #fff;">Add to Google Calendar</div>
+                        <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">Add to Google Calendar</div>
                         <div style="font-size: 11px; color: var(--text-muted);">1-click web calendar subscription</div>
                     </div>
                 </a>
@@ -461,7 +502,7 @@
                 <a id="btn-apple-cal-link" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none;">
                     <span style="font-size: 18px;">⚪</span>
                     <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 13.5px; color: #fff;">Subscribe in Apple / Outlook Calendar</div>
+                        <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">Subscribe in Apple / Outlook Calendar</div>
                         <div style="font-size: 11px; color: var(--text-muted);">Direct webcal:// auto-updating feed</div>
                     </div>
                 </a>
@@ -469,7 +510,7 @@
                 <a id="btn-download-ics-link" href="#" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none;">
                     <span style="font-size: 18px;">💾</span>
                     <div style="text-align: left;">
-                        <div style="font-weight: 700; font-size: 13.5px; color: #fff;">Download .ics File</div>
+                        <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">Download .ics File</div>
                         <div style="font-size: 11px; color: var(--text-muted);">Standard standalone iCalendar export</div>
                     </div>
                 </a>
@@ -482,6 +523,78 @@
                     <input id="calendar-feed-url-input" class="form-input" type="text" readonly style="font-size: 12px; font-family: monospace; background: rgba(0,0,0,0.3);" />
                     <button id="btn-copy-cal-feed" class="btn btn-primary btn-sm">
                         📋 Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Bank Statement & CSV Auto-Import Modal ─────────────────────────────── -->
+    <div id="import-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 760px; width: 95%;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <span>📥</span> Bank Statement & CSV Auto-Importer
+                </h3>
+                <button id="import-modal-close" class="modal-close">✕</button>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;">
+                Upload your bank statement or credit card CSV export. SubPulse will scan transactions and automatically recognize recurring subscriptions (Netflix, Spotify, ChatGPT, AWS, Adobe, GitHub, etc.).
+            </p>
+
+            <!-- Upload Dropzone Section -->
+            <div id="import-dropzone" style="border: 2px dashed rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.04); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: var(--transition); margin-bottom: 20px;">
+                <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display: none;" />
+                <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">Click or Drag & Drop Bank Statement (.CSV)</div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px;">Supports CSV exports from Chase, HDFC, ICICI, SBI, Revolut, PayPal, and generic bank templates</div>
+                <button type="button" id="btn-download-sample-csv" class="btn btn-secondary btn-sm" style="font-size: 11px;">
+                    📥 Download Sample Bank Statement CSV
+                </button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="import-loading" style="display: none; text-align: center; padding: 30px;">
+                <div style="font-size: 24px; animation: spin 1s linear infinite; display: inline-block;">⚙️</div>
+                <p style="margin-top: 10px; font-size: 13.5px; color: var(--text-secondary);">Scanning transactions & matching recurring subscription signatures...</p>
+            </div>
+
+            <!-- Detection Preview Table Section -->
+            <div id="import-preview-section" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">
+                        Detected Subscriptions (<span id="detected-count">0</span>)
+                    </div>
+                    <button type="button" id="btn-toggle-select-all" class="btn btn-secondary btn-sm" style="font-size: 11px;">
+                        Select All
+                    </button>
+                </div>
+
+                <div style="max-height: 260px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 20px;">
+                    <table class="subs-table" style="font-size: 12.5px;">
+                        <thead>
+                            <tr style="background: rgba(0,0,0,0.3);">
+                                <th style="width: 40px; text-align: center;">✓</th>
+                                <th>SERVICE</th>
+                                <th>CATEGORY</th>
+                                <th>CYCLE</th>
+                                <th>AMOUNT</th>
+                                <th>EST. RENEWAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="import-preview-tbody">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <button type="button" id="btn-cancel-import" class="btn btn-secondary btn-sm">
+                        Choose Another File
+                    </button>
+                    <button type="button" id="btn-confirm-import" class="btn btn-primary">
+                        ⚡ Import Selected Subscriptions
                     </button>
                 </div>
             </div>
