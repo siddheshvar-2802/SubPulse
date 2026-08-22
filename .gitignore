@@ -37,5 +37,10 @@ mvnw.cmd
 /nbdist/
 /.nb-gradle/
 
+### Environment Files ###
+.env
+.env.*
+*.env
+
 ### VS Code ###
 .vscode/
