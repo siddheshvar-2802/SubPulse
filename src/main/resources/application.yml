@@ -31,9 +31,9 @@ spring:
 
   # ── PostgreSQL Database ─────────────────────────────────────────────────────
   datasource:
-    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:postgresql://localhost:5432/subpulse_dev}}
-    username: ${SPRING_DATASOURCE_USERNAME:${DATABASE_USERNAME:postgres}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${DATABASE_PASSWORD:root}}
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DATABASE_USERNAME}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DATABASE_PASSWORD}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -80,8 +80,8 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:465}
-    username: ${MAIL_USERNAME:jrjarvis1999@gmail.com}
-    password: ${MAIL_PASSWORD:opne wecx zmdr fgix}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -159,31 +159,24 @@ spring:
 
   # ── PostgreSQL Database ─────────────────────────────────────────────────────
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DATABASE_USERNAME}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DATABASE_PASSWORD}}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
+      maximum-pool-size: 10
+      minimum-idle: 2
       connection-timeout: 30000
+      schema: ${DB_SCHEMA:public}
 
   # ── JPA / Hibernate ─────────────────────────────────────────────────────────
   jpa:
     hibernate:
-      ddl-auto: validate     # Never auto-alter schema in prod — use Flyway
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  # ── Redis Cache ─────────────────────────────────────────────────────────────
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
 
   # ── OAuth2 Social Login (Google & GitHub) ───────────────────────────────────
   security:
@@ -225,7 +218,7 @@ spring:
 
   # ── Kafka ────────────────────────────────────────────────────────────────────
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: subpulse-group
       auto-offset-reset: earliest
@@ -246,7 +239,7 @@ server:
 # ── JWT Configuration ─────────────────────────────────────────────────────────
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:myDevSecretKeyThatIsAtLeast256BitsLong1234567890ABCDEF}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
