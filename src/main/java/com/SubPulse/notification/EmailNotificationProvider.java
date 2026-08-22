@@ -35,9 +35,14 @@ public class EmailNotificationProvider implements NotificationProvider {
         message.setSubject(subject);
         message.setText(body);
 
-        mailSender.send(message);
-        log.info("Email alert sent to {} for subscription '{}' ({} days remaining)",
-                user.getEmail(), subscription.getServiceName(), daysRemaining);
+        try {
+            mailSender.send(message);
+            log.info("Email alert sent to {} for subscription '{}' ({} days remaining)",
+                    user.getEmail(), subscription.getServiceName(), daysRemaining);
+        } catch (Exception e) {
+            log.warn("Email delivery skipped/failed for {} (SMTP socket blocked or unavailable): {}",
+                    user.getEmail(), e.getMessage());
+        }
     }
 
     private String buildSubject(Subscription subscription, int daysRemaining) {

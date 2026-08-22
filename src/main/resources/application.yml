@@ -49,7 +49,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: ${DB_SCHEMA:public}
 
   # ── Redis Cache ─────────────────────────────────────────────────────────────
@@ -177,7 +176,6 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: ${DB_SCHEMA:subpulse}
 
   # ── OAuth2 Social Login (Google & GitHub) ───────────────────────────────────
@@ -257,3 +255,4 @@ logging:
   level:
     com.subpulse: INFO
     org.springframework.security: WARN
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
