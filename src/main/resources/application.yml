@@ -7,7 +7,7 @@ spring:
   application:
     name: SubPulse
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}   # Switch to 'prod' on deployment
+    active: ${SPRING_PROFILES_ACTIVE:dev} # Switch to 'prod' on deployment
   cache:
     type: simple
   kafka:
@@ -19,6 +19,7 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
 
 # ───────────────────────────────────────────────────────────────────────────────
 # DEV PROFILE — Local development settings
@@ -39,7 +40,7 @@ spring:
       maximum-pool-size: 10
       minimum-idle: 2
       connection-timeout: 30000
-      schema: ${DB_SCHEMA:public}
+      schema: ${DB_SCHEMA:subpulse}
 
   # ── JPA / Hibernate ─────────────────────────────────────────────────────────
   jpa:
@@ -49,7 +50,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: ${DB_SCHEMA:public}
+        default_schema: ${DB_SCHEMA:subpulse}
 
   # ── Redis Cache ─────────────────────────────────────────────────────────────
   data:
@@ -120,8 +121,8 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET:myDevSecretKeyThatIsAtLeast256BitsLong1234567890ABCDEF}
-    expiration-ms: 86400000        # 24 hours
-    refresh-expiration-ms: 604800000  # 7 days
+    expiration-ms: 86400000 # 24 hours
+    refresh-expiration-ms: 604800000 # 7 days
   whatsapp:
     twilio:
       account-sid: ${TWILIO_ACCOUNT_SID:twilio-account-sid-placeholder}
@@ -147,6 +148,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR
+
 
 # ───────────────────────────────────────────────────────────────────────────────
 # PROD PROFILE — All values from environment variables (never hardcode secrets!)
@@ -234,7 +236,7 @@ spring:
 server:
   port: ${PORT:8080}
   error:
-    include-stacktrace: never  # Never expose stack traces in prod
+    include-stacktrace: never # Never expose stack traces in prod
 
 # ── JWT Configuration ─────────────────────────────────────────────────────────
 app:
@@ -255,4 +257,3 @@ logging:
   level:
     com.subpulse: INFO
     org.springframework.security: WARN
-    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
