@@ -20,20 +20,20 @@ spring:
 
   # ── PostgreSQL Database ─────────────────────────────────────────────────────
   datasource:
-    url: jdbc:postgresql://localhost:5432/subpulse_dev
-    username: postgres
-    password: root
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:postgresql://localhost:5432/subpulse_dev}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DATABASE_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DATABASE_PASSWORD:root}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
       connection-timeout: 30000
-      schema: subpulse
+      schema: ${DB_SCHEMA:public}
 
   # ── JPA / Hibernate ─────────────────────────────────────────────────────────
   jpa:
     hibernate:
-      ddl-auto: none       # Auto-creates/updates tables in dev
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
     properties:
       hibernate:
