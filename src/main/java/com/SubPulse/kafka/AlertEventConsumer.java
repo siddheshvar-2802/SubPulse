@@ -19,6 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        name = "spring.kafka.enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class AlertEventConsumer {
 
     private final SubscriptionRepository subscriptionRepository;

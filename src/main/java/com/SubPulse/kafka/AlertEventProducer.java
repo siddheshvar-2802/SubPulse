@@ -16,18 +16,30 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AlertEventProducer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final SubscriptionRepository        subscriptionRepository;
-    private final NotificationService           notificationService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
+    private final SubscriptionRepository subscriptionRepository;
+    private final NotificationService    notificationService;
+
+    public AlertEventProducer(SubscriptionRepository subscriptionRepository, NotificationService notificationService) {
+        this.subscriptionRepository = subscriptionRepository;
+        this.notificationService = notificationService;
+    }
 
     /**
      * Publishes a renewal alert event to Kafka.
-     * If Kafka is offline, automatically falls back to direct async alert dispatch.
+     * If Kafka is offline or disabled, automatically falls back to direct async alert dispatch.
      */
     public void publishAlertEvent(RenewalAlertEvent event) {
+        if (kafkaTemplate == null) {
+            log.info("Kafka is not configured/disabled. Directly dispatching notification for '{}'", event.getServiceName());
+            executeFallbackDispatch(event);
+            return;
+        }
+
         String key = String.valueOf(event.getSubscriptionId());
         log.info("Publishing RenewalAlertEvent to topic '{}' [Key: {}, EventId: {}, Service: {}, DaysRemaining: {}]",
                 KafkaConfig.RENEWAL_ALERTS_TOPIC, key, event.getEventId(), event.getServiceName(), event.getDaysRemaining());

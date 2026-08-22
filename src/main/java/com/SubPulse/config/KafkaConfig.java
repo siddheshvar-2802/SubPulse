@@ -19,6 +19,11 @@ import org.springframework.util.backoff.FixedBackOff;
 @Slf4j
 @Configuration
 @EnableKafka
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        name = "spring.kafka.enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class KafkaConfig {
 
     public static final String RENEWAL_ALERTS_TOPIC = "subpulse.renewal-alerts";
