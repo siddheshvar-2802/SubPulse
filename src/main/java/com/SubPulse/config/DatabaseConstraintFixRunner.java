@@ -20,11 +20,12 @@ public class DatabaseConstraintFixRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try {
-            log.info("Checking and upgrading database channel constraints for PostgreSQL...");
+            log.info("Ensuring PostgreSQL schema and database channel constraints are ready...");
+            jdbcTemplate.execute("CREATE SCHEMA IF NOT EXISTS subpulse;");
             
             // Drop restrictive legacy enum check constraints created by previous Hibernate versions
-            jdbcTemplate.execute("ALTER TABLE subpulse.alert_configs DROP CONSTRAINT IF EXISTS alert_configs_channel_check;");
-            jdbcTemplate.execute("ALTER TABLE subpulse.notification_logs DROP CONSTRAINT IF EXISTS notification_logs_channel_check;");
+            jdbcTemplate.execute("ALTER TABLE IF EXISTS alert_configs DROP CONSTRAINT IF EXISTS alert_configs_channel_check;");
+            jdbcTemplate.execute("ALTER TABLE IF EXISTS notification_logs DROP CONSTRAINT IF EXISTS notification_logs_channel_check;");
             
             log.info("Database channel constraints upgraded successfully (WHATSAPP enabled).");
         } catch (Exception e) {
