@@ -2,17 +2,15 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml first for layer caching
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN chmod +x mvnw
+# Install Maven for rock-solid builds
+RUN apk add --no-cache maven
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B || true
-
-# Copy application source code and compile
+# Copy pom.xml and source code
+COPY pom.xml ./
 COPY src/ src/
-RUN ./mvnw clean package -DskipTests -B
+
+# Build executable JAR
+RUN mvn clean package -DskipTests -B
 
 # ── Stage 2: Lightweight Production Runtime ──────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
