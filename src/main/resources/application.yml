@@ -8,6 +8,17 @@ spring:
     name: SubPulse
   profiles:
     active: dev   # Switch to 'prod' on deployment
+  cache:
+    type: simple
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
+    admin:
+      auto-create: false
+      fail-fast: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
 # ───────────────────────────────────────────────────────────────────────────────
 # DEV PROFILE — Local development settings
