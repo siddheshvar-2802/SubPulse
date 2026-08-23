@@ -1,9 +1,9 @@
 package com.subpulse.notification;
 
+import com.subpulse.enums.NotificationChannel;
 import com.subpulse.entity.AlertConfig;
 import com.subpulse.entity.NotificationLog;
 import com.subpulse.entity.Subscription;
-import com.subpulse.enums.NotificationChannel;
 import com.subpulse.enums.NotificationStatus;
 import com.subpulse.repository.NotificationLogRepository;
 import lombok.extern.slf4j.Slf4j;
