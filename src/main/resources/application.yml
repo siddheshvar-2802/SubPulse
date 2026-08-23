@@ -127,19 +127,15 @@ spring:
 server:
   port: 8080
 
-# ── JWT Configuration ─────────────────────────────────────────────────────────
+# ── Application Integrations & Security ───────────────────────────────────────
 app:
   jwt:
     secret: ${JWT_SECRET:myDevSecretKeyThatIsAtLeast256BitsLong1234567890ABCDEF}
     expiration-ms: 86400000 # 24 hours
     refresh-expiration-ms: 604800000 # 7 days
-  whatsapp:
-    twilio:
-      account-sid: ${TWILIO_ACCOUNT_SID:twilio-account-sid-placeholder}
-      auth-token: ${TWILIO_AUTH_TOKEN:twilio-auth-token-placeholder}
-      from-number: ${TWILIO_WHATSAPP_FROM:+14155238886}
-    callmebot:
-      api-key: ${CALLMEBOT_API_KEY:}
+  telegram:
+    # Set TELEGRAM_BOT_TOKEN in your environment secrets or .env
+    bot-token: ${TELEGRAM_BOT_TOKEN}
 
 # ── Swagger / OpenAPI ─────────────────────────────────────────────────────────
 springdoc:

@@ -91,7 +91,16 @@ public class BankStatementParserService {
             new ServiceRule(List.of("1PASSWORD"), "1Password", SubscriptionCategory.SECURITY, "https://1password.com"),
             new ServiceRule(List.of("BITWARDEN"), "Bitwarden Premium", SubscriptionCategory.SECURITY, "https://bitwarden.com"),
             new ServiceRule(List.of("PROTON", "PROTONMAIL"), "Proton Unlimited", SubscriptionCategory.SECURITY, "https://proton.me"),
-            new ServiceRule(List.of("DROPBOX"), "Dropbox Plus", SubscriptionCategory.CLOUD_STORAGE, "https://dropbox.com")
+            new ServiceRule(List.of("DROPBOX"), "Dropbox Plus", SubscriptionCategory.CLOUD_STORAGE, "https://dropbox.com"),
+            
+            // Health & Fitness
+            new ServiceRule(List.of("CULT.FIT", "CULTFIT", "CULT FIT"), "Cult.fit Pass", SubscriptionCategory.HEALTH_FITNESS, "https://cult.fit"),
+            new ServiceRule(List.of("GYM", "FITNESS", "GOLD'S GYM", "ANYTIME FITNESS"), "Gym Membership", SubscriptionCategory.HEALTH_FITNESS, ""),
+            new ServiceRule(List.of("STRAVA"), "Strava Premium", SubscriptionCategory.HEALTH_FITNESS, "https://strava.com"),
+            new ServiceRule(List.of("MYFITNESSPAL"), "MyFitnessPal Premium", SubscriptionCategory.HEALTH_FITNESS, "https://myfitnesspal.com"),
+            new ServiceRule(List.of("WHOOP"), "Whoop Membership", SubscriptionCategory.HEALTH_FITNESS, "https://whoop.com"),
+            new ServiceRule(List.of("HEADSPACE"), "Headspace Plus", SubscriptionCategory.HEALTH_FITNESS, "https://headspace.com"),
+            new ServiceRule(List.of("CALM.COM", "CALM"), "Calm Premium", SubscriptionCategory.HEALTH_FITNESS, "https://calm.com")
     );
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = List.of(

@@ -3,6 +3,8 @@ package com.subpulse.controller;
 import com.subpulse.dto.request.SubscriptionRequest;
 import com.subpulse.dto.response.AnalyticsResponse;
 import com.subpulse.dto.response.SubscriptionResponse;
+import com.subpulse.notification.NotificationService;
+import com.subpulse.repository.SubscriptionRepository;
 import com.subpulse.security.CustomUserDetails;
 import com.subpulse.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +32,7 @@ import java.util.UUID;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
-    private final AlertEventProducer  alertEventProducer;
+    private final AlertEventProducer alertEventProducer;
 
     @PostMapping
     @Operation(summary = "Add a new subscription")
@@ -130,6 +132,7 @@ public class SubscriptionController {
                 .build();
 
         alertEventProducer.publishAlertEvent(event);
-        return ResponseEntity.ok("RenewalAlertEvent published to Kafka for '" + sub.getServiceName() + "' [Event ID: " + event.getEventId() + "]");
+
+        return ResponseEntity.ok("Renewal Alert dispatched for '" + sub.getServiceName() + "' via configured channels!");
     }
 }

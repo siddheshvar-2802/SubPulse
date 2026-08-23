@@ -3,6 +3,7 @@ package com.subpulse.scheduler;
 import com.subpulse.dto.event.RenewalAlertEvent;
 import com.subpulse.entity.Subscription;
 import com.subpulse.kafka.AlertEventProducer;
+import com.subpulse.repository.AlertConfigRepository;
 import com.subpulse.repository.NotificationLogRepository;
 import com.subpulse.repository.SubscriptionRepository;
 import com.subpulse.enums.NotificationStatus;
@@ -30,13 +31,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RenewalAlertScheduler {
 
-    private static final List<Integer> ALERT_WINDOWS = Arrays.asList(30, 14, 7, 3, 1, 0);
+    private static final List<Integer> ALERT_WINDOWS = Arrays.asList(30, 14, 7, 5, 3, 2, 1, 0);
 
     private final SubscriptionRepository    subscriptionRepository;
+    private final AlertConfigRepository alertConfigRepository;
     private final NotificationLogRepository notificationLogRepository;
     private final AlertEventProducer        alertEventProducer;
 
-    @Scheduled(cron = "0 0 9 * * *") // Every day at 09:00 AM UTC
+    @Scheduled(cron = "${app.scheduler.renewal-alert-cron:0 0 9 * * *}") // Every day at 09:00 AM UTC
     @SchedulerLock(
             name = "renewalAlertScheduler",
             lockAtLeastFor = "PT5M",   // Hold lock for at least 5 minutes
@@ -47,7 +49,17 @@ public class RenewalAlertScheduler {
         log.info("=== RenewalAlertScheduler started (Kafka Streaming Mode) ===");
         int totalEventsPublished = 0;
 
-        for (int daysRemaining : ALERT_WINDOWS) {
+        java.util.Set<Integer> targetWindows = new java.util.TreeSet<>(ALERT_WINDOWS);
+        try {
+            alertConfigRepository.findAll().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getIsEnabled()) && a.getDaysBefore() != null)
+                    .map(com.subpulse.entity.AlertConfig::getDaysBefore)
+                    .forEach(targetWindows::add);
+        } catch (Exception e) {
+            log.warn("Could not query dynamic alert windows, falling back to default windows: {}", e.getMessage());
+        }
+
+        for (int daysRemaining : targetWindows) {
             LocalDate targetDate = LocalDate.now().plusDays(daysRemaining);
 
             List<Subscription> dueSubscriptions =

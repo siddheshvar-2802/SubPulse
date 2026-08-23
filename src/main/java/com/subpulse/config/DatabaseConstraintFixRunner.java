@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Ensures legacy PostgreSQL check constraints on 'channel' columns
- * are dropped or updated to allow new channels (WHATSAPP, DISCORD, WEBHOOK).
+ * are dropped or updated to allow modern channels (TELEGRAM, EMAIL, DISCORD, WEBHOOK).
  */
 @Slf4j
 @Component
@@ -26,8 +26,13 @@ public class DatabaseConstraintFixRunner implements CommandLineRunner {
             // Drop restrictive legacy enum check constraints created by previous Hibernate versions
             jdbcTemplate.execute("ALTER TABLE IF EXISTS alert_configs DROP CONSTRAINT IF EXISTS alert_configs_channel_check;");
             jdbcTemplate.execute("ALTER TABLE IF EXISTS notification_logs DROP CONSTRAINT IF EXISTS notification_logs_channel_check;");
+            jdbcTemplate.execute("ALTER TABLE IF EXISTS subscriptions DROP CONSTRAINT IF EXISTS subscriptions_category_check;");
             
-            log.info("Database channel constraints upgraded successfully (WHATSAPP enabled).");
+            // Migrate any existing legacy WHATSAPP rows to TELEGRAM
+            jdbcTemplate.execute("UPDATE alert_configs SET channel = 'TELEGRAM' WHERE channel = 'WHATSAPP';");
+            jdbcTemplate.execute("UPDATE notification_logs SET channel = 'TELEGRAM' WHERE channel = 'WHATSAPP';");
+            
+            log.info("Database channel constraints upgraded and legacy records migrated successfully (TELEGRAM enabled).");
         } catch (Exception e) {
             log.warn("Database constraint upgrade check: {}", e.getMessage());
         }

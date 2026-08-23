@@ -15,5 +15,6 @@ public enum SubscriptionCategory {
     COMMUNICATION,
     EDUCATION,
     AI_TOOLS,
+    HEALTH_FITNESS,
     OTHER
 }
