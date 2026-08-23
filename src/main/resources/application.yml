@@ -20,6 +20,16 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
+# ── Actuator Health Check Configuration ────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    mail:
+      enabled: false  # Disable SMTP probe in health check so Render pings succeed instantly
+
 
 # ───────────────────────────────────────────────────────────────────────────────
 # DEV PROFILE — Local development settings
