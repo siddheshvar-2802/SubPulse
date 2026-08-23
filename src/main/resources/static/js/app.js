@@ -354,16 +354,16 @@ function renderUpcoming(upcoming) {
         const uLogo = getServiceLogoUrl(sub.serviceName, sub.websiteUrl);
         html += `
             <div class="upcoming-item">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div class="upcoming-item-content">
+                    <div style="width: 30px; height: 30px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         ${uLogo ? `<img src="${uLogo}" alt="${sub.serviceName}" style="width: 18px; height: 18px; object-fit: contain;" />` : `<span>⚡</span>`}
                     </div>
-                    <div>
-                        <div style="font-weight: 600; font-size: 13.5px; color: var(--text-primary);">${escapeHtml(sub.serviceName)}</div>
-                        <div style="font-size: 11.5px; color: var(--text-muted);">${sub.currency} ${Number(sub.amount).toFixed(2)} / ${sub.billingCycle.toLowerCase()}</div>
+                    <div class="upcoming-item-text">
+                        <div class="upcoming-item-title">${escapeHtml(sub.serviceName)}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sub.currency} ${Number(sub.amount).toFixed(2)} / ${sub.billingCycle.toLowerCase()}</div>
                     </div>
                 </div>
-                <span class="badge ${badgeClass}">${label}</span>
+                <span class="badge ${badgeClass}" style="flex-shrink: 0;">${label}</span>
             </div>
         `;
     });
