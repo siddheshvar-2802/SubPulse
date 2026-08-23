@@ -30,6 +30,34 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
+// ── PWA & Service Worker ───────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('btn-install-pwa');
+    if (installBtn) {
+        installBtn.style.display = 'inline-flex';
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('🎉 SubPulse added to home screen!', 'success');
+                }
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}
+
 // ── Init & View Routing ─────────────────────────────────────────────────────
 initTheme();
 
@@ -136,8 +164,16 @@ function setupEventListeners() {
     });
 
     // Logout
-    document.getElementById('btn-logout')?.addEventListener('click', () => {
-        if (confirm('Are you sure you want to log out of SubPulse?')) {
+    document.getElementById('btn-logout')?.addEventListener('click', async () => {
+        const confirmed = await showConfirmDialog({
+            title: 'Sign Out?',
+            message: 'Are you sure you want to log out of your SubPulse dashboard?',
+            confirmText: 'Sign Out',
+            cancelText: 'Cancel',
+            icon: '🚪',
+            isDanger: false
+        });
+        if (confirmed) {
             api.logout();
         }
     });
@@ -217,12 +253,82 @@ function setupEventListeners() {
     document.getElementById('btn-cancel-import')?.addEventListener('click', resetImportModal);
     document.getElementById('btn-confirm-import')?.addEventListener('click', handleConfirmImport);
 
-    // Alert Config Modal close
+    // Alert Config Modal close & channel switch handler
     document.getElementById('alert-modal-close')?.addEventListener('click', () => {
         closeAlertModal();
     });
 
+    const alertChannelSelect = document.getElementById('alert-channel');
+    const alertDestInput = document.getElementById('alert-dest');
+    const alertDestLabel = document.getElementById('alert-dest-label');
+    const telegramHelperBox = document.getElementById('telegram-helper-box');
+
+    alertChannelSelect?.addEventListener('change', () => {
+        const val = alertChannelSelect.value;
+        if (val === 'TELEGRAM') {
+            if (alertDestLabel) alertDestLabel.textContent = 'Telegram Chat ID';
+            if (alertDestInput) {
+                alertDestInput.placeholder = 'e.g. 123456789 (Your Telegram Chat ID)';
+                alertDestInput.required = true;
+            }
+            if (telegramHelperBox) telegramHelperBox.style.display = 'block';
+        } else if (val === 'EMAIL') {
+            if (alertDestLabel) alertDestLabel.textContent = 'Destination Email';
+            if (alertDestInput) {
+                alertDestInput.placeholder = 'e.g. yourname@gmail.com (or leave blank for account email)';
+                alertDestInput.required = false;
+            }
+            if (telegramHelperBox) telegramHelperBox.style.display = 'none';
+        } else if (val === 'DISCORD') {
+            if (alertDestLabel) alertDestLabel.textContent = 'Discord Webhook URL';
+            if (alertDestInput) {
+                alertDestInput.placeholder = 'https://discord.com/api/webhooks/...';
+                alertDestInput.required = true;
+            }
+            if (telegramHelperBox) telegramHelperBox.style.display = 'none';
+        } else if (val === 'WEBHOOK') {
+            if (alertDestLabel) alertDestLabel.textContent = 'HTTP POST Webhook URL';
+            if (alertDestInput) {
+                alertDestInput.placeholder = 'https://your-api.com/webhook/subpulse';
+                alertDestInput.required = true;
+            }
+            if (telegramHelperBox) telegramHelperBox.style.display = 'none';
+        }
+    });
+
     document.getElementById('alert-form')?.addEventListener('submit', handleAlertSubmit);
+
+    // Cancel Guide Modal Close
+    document.getElementById('cancel-modal-close')?.addEventListener('click', closeCancelModal);
+
+    // Bill Splitter Modal Handlers
+    document.getElementById('btn-open-splitter')?.addEventListener('click', () => openSplitterModal());
+    document.getElementById('splitter-modal-close')?.addEventListener('click', closeSplitterModal);
+    document.getElementById('splitter-sub-select')?.addEventListener('change', (e) => {
+        const opt = e.target.selectedOptions[0];
+        if (opt) {
+            const amt = opt.getAttribute('data-amount');
+            if (amt) document.getElementById('splitter-total-amount').value = amt;
+            recalculateSplit();
+        }
+    });
+    document.getElementById('splitter-total-amount')?.addEventListener('input', recalculateSplit);
+    document.getElementById('splitter-members-count')?.addEventListener('input', recalculateSplit);
+
+    document.getElementById('btn-copy-reminder')?.addEventListener('click', () => {
+        const text = document.getElementById('splitter-reminder-text')?.value;
+        if (text) {
+            navigator.clipboard.writeText(text);
+            showToast('📋 Payment reminder copied to clipboard!', 'success');
+        }
+    });
+
+    document.getElementById('btn-share-telegram')?.addEventListener('click', () => {
+        const text = document.getElementById('splitter-reminder-text')?.value;
+        if (text) {
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(text)}`, '_blank');
+        }
+    });
 }
 
 // ── Load Dashboard Data ─────────────────────────────────────────────────────
@@ -244,7 +350,10 @@ async function loadDashboardData() {
         renderAiOptimization(aiOpt);
         renderUpcoming(upcoming);
         renderSubscriptionsTable(currentSubscriptions);
-        charts.renderCategoryBars('category-bars-container', analytics?.spendByCategory, analytics?.currency);
+        charts.renderForecastChart('forecast-chart-canvas', currentSubscriptions, selectedCurrency);
+        charts.renderCategoryDonutChart('category-donut-canvas', analytics?.spendByCategory, selectedCurrency);
+        charts.renderCategoryBars('category-bars-container', analytics?.spendByCategory, selectedCurrency);
+        populateSplitterDropdown(currentSubscriptions);
 
     } catch (err) {
         showToast('Error loading dashboard: ' + err.message, 'error');
@@ -385,14 +494,22 @@ function renderSubscriptionsTable(subscriptions) {
 
     if (emptyState) emptyState.style.display = 'none';
 
+    // Sort: Active first (A-Z), Stopped/Paused last (A-Z)
+    const sortedSubscriptions = [...subscriptions].sort((a, b) => {
+        if (a.isActive !== b.isActive) {
+            return a.isActive ? -1 : 1;
+        }
+        return (a.serviceName || '').localeCompare(b.serviceName || '', undefined, { sensitivity: 'base' });
+    });
+
     let html = '';
-    subscriptions.forEach(sub => {
+    sortedSubscriptions.forEach(sub => {
         const initial = sub.serviceName ? sub.serviceName[0].toUpperCase() : 'S';
         const color = charts.getColor(sub.category);
         const logoUrl = getServiceLogoUrl(sub.serviceName, sub.websiteUrl);
 
         html += `
-            <tr>
+            <tr style="${!sub.isActive ? 'opacity: 0.55; filter: grayscale(20%);' : ''}">
                 <td>
                     <div class="service-cell">
                         <div class="service-icon" style="background: rgba(255, 255, 255, 0.04); border-color: ${color}33;">
@@ -429,35 +546,40 @@ function renderSubscriptionsTable(subscriptions) {
                     </label>
                 </td>
                 <td>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <button class="btn btn-secondary btn-sm" onclick="openAlertModal(${sub.id}, '${sub.serviceName}')" title="Configure renewal alerts">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-amber);">
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button class="btn btn-secondary btn-sm" onclick="openAlertModal(${sub.id}, '${escapeHtml(sub.serviceName)}')" title="Configure renewal alerts" aria-label="Alerts" style="padding: 6px 9px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-amber);">
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                             </svg>
-                            <span>Alerts</span>
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="triggerKafkaEvent(${sub.id})" title="Trigger instant alert ping">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #fbbf24;">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        <button class="btn btn-secondary btn-sm" onclick="openCancelModal('${escapeHtml(sub.serviceName)}')" title="How to cancel subscription" aria-label="Cancel Guide" style="padding: 6px 9px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-rose);">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
                             </svg>
-                            <span>Ping</span>
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="editSubscription(${sub.id})" title="Edit subscription">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button class="btn btn-secondary btn-sm" onclick="openSplitterModal(${sub.id})" title="Split bill with family/team" aria-label="Split Bill" style="padding: 6px 9px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="editSubscription(${sub.id})" title="Edit subscription" aria-label="Edit" style="padding: 6px 9px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
-                            <span>Edit</span>
                         </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteSubscription(${sub.id})" title="Delete subscription">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteSubscription(${sub.id})" title="Delete subscription" aria-label="Delete" style="padding: 6px 9px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 <line x1="10" y1="11" x2="10" y2="17"></line>
                                 <line x1="14" y1="11" x2="14" y2="17"></line>
                             </svg>
-                            <span>Delete</span>
                         </button>
                     </div>
                 </td>
@@ -546,21 +668,115 @@ function editSubscription(id) {
     if (sub) openSubscriptionModal(sub);
 }
 
+// ── Reusable Centered Confirmation Dialog ──────────────────────────────────
+function showConfirmDialog({ title = 'Are you sure?', message = '', confirmText = 'Confirm', cancelText = 'Cancel', iconType = 'trash', isDanger = true }) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        if (!modal) {
+            resolve(confirm(message || title));
+            return;
+        }
+
+        const titleEl = document.getElementById('confirm-modal-title');
+        const msgEl = document.getElementById('confirm-modal-message');
+        const iconEl = document.getElementById('confirm-modal-icon');
+        const okBtn = document.getElementById('confirm-modal-ok-btn');
+        const cancelBtn = document.getElementById('confirm-modal-cancel-btn');
+
+        if (titleEl) titleEl.textContent = title;
+        if (msgEl) msgEl.textContent = message;
+        if (cancelBtn) cancelBtn.textContent = cancelText;
+
+        const iconSvgMap = {
+            'trash': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-rose, #f43f5e);"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`,
+            'logout': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary, #6366f1);"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`,
+            'warning': `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-amber, #f59e0b);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`
+        };
+
+        if (iconEl) {
+            iconEl.innerHTML = iconSvgMap[iconType] || iconSvgMap['trash'];
+            if (isDanger) {
+                iconEl.style.background = 'rgba(244, 63, 94, 0.12)';
+                iconEl.style.borderColor = 'rgba(244, 63, 94, 0.25)';
+            } else {
+                iconEl.style.background = 'rgba(99, 102, 241, 0.12)';
+                iconEl.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+            }
+        }
+
+        if (okBtn) {
+            okBtn.textContent = confirmText;
+            if (isDanger) {
+                okBtn.style.background = 'var(--accent-rose, #f43f5e)';
+            } else {
+                okBtn.style.background = 'var(--primary, #6366f1)';
+            }
+        }
+
+        modal.classList.add('active');
+
+        function cleanup(result) {
+            modal.classList.remove('active');
+            okBtn?.removeEventListener('click', onOk);
+            cancelBtn?.removeEventListener('click', onCancel);
+            modal.removeEventListener('click', onBackdrop);
+            resolve(result);
+        }
+
+        function onOk() { cleanup(true); }
+        function onCancel() { cleanup(false); }
+        function onBackdrop(e) {
+            if (e.target === modal) cleanup(false);
+        }
+
+        okBtn?.addEventListener('click', onOk);
+        cancelBtn?.addEventListener('click', onCancel);
+        modal.addEventListener('click', onBackdrop);
+    });
+}
+
 async function deleteSubscription(id) {
-    if (!confirm('Are you sure you want to delete this subscription?')) return;
+    const sub = currentSubscriptions.find(s => s.id === id);
+    const serviceName = sub ? sub.serviceName : 'this subscription';
+    
+    const confirmed = await showConfirmDialog({
+        title: `Delete "${serviceName}"?`,
+        message: 'This will remove the subscription and all associated renewal alerts. This action cannot be undone.',
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel',
+        iconType: 'trash',
+        isDanger: true
+    });
+
+    if (!confirmed) return;
+
     try {
         await api.deleteSubscription(id);
-        showToast('Subscription removed.', 'success');
+        showToast(`Subscription "${serviceName}" deleted successfully.`, 'success');
         loadDashboardData();
     } catch (err) {
         showToast(err.message, 'error');
     }
 }
 
-// ── Alert Config Rules Modal ────────────────────────────────────────────────
 async function openAlertModal(subscriptionId, serviceName) {
     currentAlertSubscriptionId = subscriptionId;
     document.getElementById('alert-modal-title').textContent = `Alert Rules: ${serviceName}`;
+
+    // Reset default to Telegram Bot
+    const channelSelect = document.getElementById('alert-channel');
+    if (channelSelect) channelSelect.value = 'TELEGRAM';
+    const destLabel = document.getElementById('alert-dest-label');
+    if (destLabel) destLabel.textContent = 'Telegram Chat ID';
+    const destInput = document.getElementById('alert-dest');
+    if (destInput) {
+        destInput.value = '';
+        destInput.placeholder = 'e.g. 123456789 (Your Telegram Chat ID)';
+        destInput.required = true;
+    }
+    const helperBox = document.getElementById('telegram-helper-box');
+    if (helperBox) helperBox.style.display = 'block';
+
     document.getElementById('alert-modal').classList.add('active');
     loadAlertRules(subscriptionId);
 }
@@ -583,11 +799,15 @@ async function loadAlertRules(subscriptionId) {
 
         let html = '';
         rules.forEach(r => {
+            const channelIcon = r.channel === 'TELEGRAM' ? '✈️ Telegram' :
+                                r.channel === 'EMAIL' ? '📧 Email' :
+                                r.channel === 'DISCORD' ? '🎮 Discord' : '🔗 Webhook';
+
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 8px;">
                     <div>
                         <div style="font-weight: 600; font-size: 13px;">🔔 Notify ${r.daysBefore} day(s) before</div>
-                        <div style="font-size: 11px; color: var(--text-muted);">via <strong>${r.channel}</strong> (${r.destination || 'default email'})</div>
+                        <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">via <strong style="color: var(--text-primary);">${channelIcon}</strong> (${r.destination || 'default email'})</div>
                     </div>
                     <button class="btn btn-outline-danger btn-sm" onclick="removeAlertRule(${r.id})">Delete</button>
                 </div>
@@ -622,6 +842,15 @@ async function handleAlertSubmit(e) {
 
 async function removeAlertRule(alertId) {
     if (!currentAlertSubscriptionId) return;
+    const confirmed = await showConfirmDialog({
+        title: 'Delete Alert Rule?',
+        message: 'Are you sure you want to delete this renewal alert notification rule?',
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel',
+        iconType: 'trash',
+        isDanger: true
+    });
+    if (!confirmed) return;
     try {
         await api.deleteAlert(currentAlertSubscriptionId, alertId);
         showToast('Alert rule deleted.', 'info');
@@ -631,13 +860,14 @@ async function removeAlertRule(alertId) {
     }
 }
 
-// ── Manual Alert Ping / Kafka Event Trigger ───────────────────────────────
-async function triggerKafkaEvent(subscriptionId) {
+// ── Manual Alert Ping / Instant Notification Trigger ─────────────────────────
+async function triggerInstantTestAlert(subscriptionId, serviceName) {
+    showToast(`⚡ Dispatching instant test alert for "${serviceName}"...`, 'info');
     try {
-        const msg = await api.triggerTestKafkaEvent(subscriptionId, 7);
-        showToast('⚡ Alert Ping dispatched successfully!', 'success');
+        await api.triggerTestAlert(subscriptionId, 7);
+        showToast(`⚡ Instant alert sent for "${serviceName}"! Check your Telegram / Email.`, 'success');
     } catch (err) {
-        showToast('Ping error: ' + err.message, 'error');
+        showToast('Alert dispatch notice: ' + err.message, 'error');
     }
 }
 
@@ -961,3 +1191,124 @@ function toggleTheme() {
     applyTheme(next);
     showToast(`Switched to ${next === 'dark' ? 'Dark Mode 🌙' : 'Light Mode ☀️'}`, 'info');
 }
+
+// ── 1-Click "Cancel Plan" Direct Guide Modal ──────────────────────────────
+function openCancelModal(serviceName) {
+    const modal = document.getElementById('cancel-modal');
+    const titleEl = document.getElementById('cancel-modal-title');
+    const contentEl = document.getElementById('cancel-modal-content');
+    if (!modal || !contentEl) return;
+
+    const info = (typeof cancelCatalog !== 'undefined') ? cancelCatalog.findService(serviceName) : null;
+    const sName = info ? info.name : serviceName;
+
+    if (titleEl) titleEl.textContent = `How to Cancel ${sName}`;
+
+    let stepsHtml = '';
+    if (info && info.steps) {
+        stepsHtml = info.steps.map((step, idx) => `
+            <li style="margin-bottom: 8px; line-height: 1.4;">
+                <strong style="color: var(--text-primary);">${idx + 1}.</strong> ${escapeHtml(step)}
+            </li>
+        `).join('');
+    }
+
+    contentEl.innerHTML = `
+        <div style="margin-bottom: 18px;">
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
+                Follow these verified steps to cancel your recurring <strong>${escapeHtml(sName)}</strong> subscription without unexpected charges.
+            </p>
+
+            <a href="${info?.cancelUrl || '#'}" target="_blank" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-decoration: none; padding: 12px; margin-bottom: 16px; font-weight: 700;">
+                <span>🔗 Open ${escapeHtml(sName)} Cancellation Portal</span>
+                <span>↗</span>
+            </a>
+
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Step-by-Step Instructions:</div>
+                <ol style="padding-left: 18px; margin: 0; font-size: 12.5px; color: var(--text-secondary);">
+                    ${stepsHtml}
+                </ol>
+            </div>
+
+            ${info?.tip ? `
+                <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 10px 12px; font-size: 11.5px; color: #a5b4fc; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 14px;">💡</span>
+                    <span><strong>Pro-Tip:</strong> ${escapeHtml(info.tip)}</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    modal.classList.add('active');
+}
+
+function closeCancelModal() {
+    document.getElementById('cancel-modal')?.classList.remove('active');
+}
+
+// ── Family & Team Bill Splitter Controller ─────────────────────────────────
+function populateSplitterDropdown(subscriptions) {
+    const select = document.getElementById('splitter-sub-select');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- Select a Subscription (or Enter Custom Below) --</option>';
+    if (subscriptions && subscriptions.length > 0) {
+        subscriptions.forEach(s => {
+            select.innerHTML += `<option value="${s.id}" data-amount="${s.amount}" data-currency="${s.currency}" data-name="${escapeHtml(s.serviceName)}" data-cycle="${s.billingCycle}" data-date="${s.nextBillingDate || ''}">${escapeHtml(s.serviceName)} (${s.currency} ${Number(s.amount).toFixed(2)} / ${s.billingCycle.toLowerCase()})</option>`;
+        });
+    }
+}
+
+function openSplitterModal(subId = null) {
+    const modal = document.getElementById('splitter-modal');
+    const select = document.getElementById('splitter-sub-select');
+    const amountInput = document.getElementById('splitter-total-amount');
+
+    if (subId && select) {
+        select.value = subId;
+        const opt = select.selectedOptions[0];
+        if (opt && amountInput) {
+            amountInput.value = opt.getAttribute('data-amount') || '';
+        }
+    } else if (select && select.value) {
+        const opt = select.selectedOptions[0];
+        if (opt && amountInput && !amountInput.value) {
+            amountInput.value = opt.getAttribute('data-amount') || '';
+        }
+    }
+
+    recalculateSplit();
+    modal?.classList.add('active');
+}
+
+function closeSplitterModal() {
+    document.getElementById('splitter-modal')?.classList.remove('active');
+}
+
+function recalculateSplit() {
+    const select = document.getElementById('splitter-sub-select');
+    const amountInput = document.getElementById('splitter-total-amount');
+    const countInput = document.getElementById('splitter-members-count');
+    const perPersonEl = document.getElementById('splitter-per-person');
+    const summaryEl = document.getElementById('splitter-summary-text');
+    const reminderEl = document.getElementById('splitter-reminder-text');
+
+    const total = parseFloat(amountInput?.value) || 0;
+    const count = parseInt(countInput?.value) || 2;
+    const opt = select?.selectedOptions[0];
+    const currency = opt?.getAttribute('data-currency') || 'USD';
+    const sName = (opt && opt.value) ? opt.getAttribute('data-name') : 'Subscription';
+    const cycle = (opt && opt.value) ? (opt.getAttribute('data-cycle') || 'monthly').toLowerCase() : 'month';
+    const dateStr = (opt && opt.value) ? (opt.getAttribute('data-date') || 'soon') : 'soon';
+
+    const perPerson = total > 0 ? (total / count).toFixed(2) : '0.00';
+
+    if (perPersonEl) perPersonEl.textContent = `${currency} ${perPerson} / person`;
+    if (summaryEl) summaryEl.textContent = `${count} members splitting ${currency} ${total.toFixed(2)} (${cycle})`;
+
+    if (reminderEl) {
+        reminderEl.value = `Hey! 👋 Your share for ${sName} is ${currency} ${perPerson} this ${cycle} (Renewal: ${dateStr}). Please send via UPI / Bank transfer. Thanks! ⚡`;
+    }
+}
+

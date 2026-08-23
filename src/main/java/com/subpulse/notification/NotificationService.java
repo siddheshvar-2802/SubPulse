@@ -1,9 +1,9 @@
 package com.subpulse.notification;
 
+import com.subpulse.enums.NotificationChannel;
 import com.subpulse.entity.AlertConfig;
 import com.subpulse.entity.NotificationLog;
 import com.subpulse.entity.Subscription;
-import com.subpulse.enums.NotificationChannel;
 import com.subpulse.enums.NotificationStatus;
 import com.subpulse.repository.NotificationLogRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -44,14 +44,40 @@ public class NotificationService {
     }
 
     /**
-     * Dispatch an alert for a subscription via all its enabled alert configs.
+     * Dispatch an alert for a subscription via all its enabled alert configs
+     * matching the exact daysRemaining condition.
      */
     public void dispatch(Subscription subscription, int daysRemaining) {
-        List<AlertConfig> enabledAlerts = subscription.getAlertConfigs().stream()
-                .filter(AlertConfig::getIsEnabled)
+        List<AlertConfig> allConfigs = subscription.getAlertConfigs();
+        
+        List<AlertConfig> matchingAlerts = (allConfigs == null ? List.<AlertConfig>of() : allConfigs).stream()
+                .filter(a -> Boolean.TRUE.equals(a.getIsEnabled()))
+                .filter(a -> a.getDaysBefore() == null || a.getDaysBefore() == daysRemaining)
                 .toList();
 
-        for (AlertConfig alert : enabledAlerts) {
+        // Fallback: If no custom alert rules are configured on this subscription,
+        // send default email reminder at standard thresholds (3 days or 1 day before)
+        if (matchingAlerts.isEmpty() && (allConfigs == null || allConfigs.isEmpty())) {
+            if (daysRemaining == 3 || daysRemaining == 1 || daysRemaining == 0) {
+                NotificationProvider emailProvider = providers.get(NotificationChannel.EMAIL);
+                if (emailProvider != null && subscription.getUser() != null) {
+                    NotificationLog.NotificationLogBuilder logBuilder = NotificationLog.builder()
+                            .subscription(subscription)
+                            .channel(NotificationChannel.EMAIL)
+                            .daysRemaining(daysRemaining)
+                            .sentAt(LocalDateTime.now());
+                    try {
+                        emailProvider.sendAlert(subscription.getUser(), subscription, daysRemaining, subscription.getUser().getEmail());
+                        logRepository.save(logBuilder.status(NotificationStatus.SENT).build());
+                    } catch (Exception e) {
+                        logRepository.save(logBuilder.status(NotificationStatus.FAILED).errorMessage(e.getMessage()).build());
+                    }
+                }
+            }
+            return;
+        }
+
+        for (AlertConfig alert : matchingAlerts) {
             sendAndLog(subscription, alert, daysRemaining);
         }
     }

@@ -143,6 +143,12 @@ const api = {
         });
     },
 
+    async triggerTestAlert(id, daysRemaining = 7) {
+        return await this.request(`/subscriptions/${id}/test-alert-event?daysRemaining=${daysRemaining}`, {
+            method: 'POST'
+        });
+    },
+
     // ── Alert Configs Endpoints ─────────────────────────────────────────────
     async getAlerts(subscriptionId) {
         return await this.request(`/subscriptions/${subscriptionId}/alerts`);
